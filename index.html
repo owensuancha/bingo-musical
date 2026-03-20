@@ -145,19 +145,24 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 .print-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
 .print-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
 .p-carton{border:1px solid #ccc;border-radius:8px;padding:12px;page-break-inside:avoid;break-inside:avoid;}
-.p-title{font-size:13px;font-weight:600;margin-bottom:6px;text-align:center;}
-.p-letters{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:2px;}
-.p-letter{text-align:center;font-weight:700;font-size:13px;}
-.p-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
-.p-cell{border:1px solid #ccc;border-radius:4px;padding:3px;font-size:7.5px;text-align:center;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;gap:1px;}
-.p-cell .p-artist{font-size:6.5px;color:#666;}
-.p-cell.free{background:#f0f0f0;font-weight:700;font-size:9px;}
+.p-title{font-size:14px;font-weight:700;margin-bottom:8px;text-align:center;}
+.p-letters{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:3px;}
+.p-letter{text-align:center;font-weight:700;font-size:16px;}
+.p-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
+.p-cell{border:1.5px solid #999;border-radius:5px;padding:5px 4px;font-size:10px;text-align:center;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.3;gap:2px;font-weight:500;}
+.p-cell .p-artist{font-size:8.5px;color:#555;font-weight:400;}
+.p-cell.free{background:#e8f5ee;font-weight:700;font-size:12px;color:#1D9E75;}
 @media print{
+  @page{margin:10mm;}
   body{background:#fff;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .dir-nav{display:none!important;}
   .no-print{display:none!important;}
-  #print-view{display:flex!important;}
-  .screen:not(#print-view){display:none!important;}
-  .print-grid{grid-template-columns:repeat(2,1fr);}
+  .screen{display:none!important;}
+  #print-view{display:block!important;}
+  .print-controls{display:none!important;}
+  .print-grid{display:grid;grid-template-columns:1fr 1fr;gap:12mm;}
+  .p-carton{page-break-inside:avoid;break-inside:avoid;border:1.5px solid #ccc;border-radius:8px;padding:10px;}
 }
 </style>
 </head>
@@ -282,8 +287,17 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
   </div>
 
   <div id="hist-wrap" style="display:none;padding:0 1.25rem;margin-top:12px;">
-    <div class="label">Historial</div>
-    <div id="hist-pills" style="margin-top:4px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="label">Historial de canciones jugadas</div>
+      <button class="btn-ghost" style="font-size:11px;" onclick="toggleVerification()">Ver listado completo ↓</button>
+    </div>
+    <div id="hist-pills"></div>
+    <div id="verification-panel" style="display:none;margin-top:10px;">
+      <div style="background:var(--bg2);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">✓ Listado oficial de canciones jugadas — para verificar bingos</div>
+        <div id="verification-list"></div>
+      </div>
+    </div>
   </div>
   <div style="height:1.5rem;"></div>
 </div>
@@ -380,32 +394,30 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 
 <!-- ===== PRINT ===== -->
 <div id="print-view" class="screen">
-  <div class="print-header no-print">
-    <div>
+  <div class="print-controls no-print" style="padding:1.5rem;display:flex;flex-direction:column;gap:14px;max-width:520px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
       <h2 style="font-size:18px;font-weight:600;">Imprimir cartones</h2>
-      <p class="hint">La sala activa se carga automáticamente</p>
-    </div>
-    <div class="row">
       <button class="btn-ghost" onclick="dirNavGo('director')">← Director</button>
     </div>
-  </div>
-
-  <div class="no-print card" style="max-width:480px;">
-    <div class="label">Código de sala activa</div>
-    <div class="row" style="margin-top:6px;">
-      <input id="print-sala-input" type="text" maxlength="8" placeholder="Ej: FIESTA25" style="text-transform:uppercase;max-width:180px;letter-spacing:.08em;font-weight:600;">
-      <input id="print-qty" type="number" min="1" max="60" value="10" style="max-width:80px;">
-      <button class="btn btn-primary btn-sm" onclick="buildPrint()">Generar</button>
+    <div class="card">
+      <div class="label">Código de sala activa</div>
+      <div class="row" style="margin-top:6px;">
+        <input id="print-sala-input" type="text" maxlength="8" placeholder="Ej: FIESTA25" style="text-transform:uppercase;max-width:180px;letter-spacing:.08em;font-weight:600;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:13px;color:var(--text2);">Cantidad:</span>
+          <input id="print-qty" type="number" min="1" max="60" value="10" style="max-width:70px;">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="buildPrint()">Generar</button>
+      </div>
+      <div class="hint" style="margin-top:6px;">Máximo 60 cartones. Cada cartón es único. Se imprimen 2 por hoja.</div>
+      <div id="print-error" style="font-size:13px;color:var(--red);display:none;margin-top:6px;"></div>
     </div>
-    <div class="hint" style="margin-top:6px;">Máximo 60 cartones. Cada cartón es único.</div>
-    <div id="print-error" style="font-size:13px;color:var(--red);display:none;margin-top:6px;"></div>
+    <div id="print-actions" style="display:none;" class="row">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir</button>
+      <span class="hint" id="print-count-label"></span>
+    </div>
   </div>
-
-  <div id="print-cartons-area" style="margin-top:1rem;"></div>
-
-  <div id="print-actions" style="display:none;" class="row no-print" style="margin-top:1rem;">
-    <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir</button>
-  </div>
+  <div id="print-cartons-area" class="print-grid" style="padding:0 1.5rem 2rem;display:none;grid-template-columns:1fr 1fr;gap:16px;"></div>
 </div>
 
 <script>
@@ -701,9 +713,34 @@ function updateDStats(playedCount) {
 function updateHist(played) {
   const w = document.getElementById('hist-wrap');
   w.style.display = played.length ? 'block' : 'none';
+  // Compact pills
   document.getElementById('hist-pills').innerHTML = played.map(i =>
     `<span class="pill"><b>${songs[i].num}</b> ${songs[i].title}</span>`
   ).join('');
+  // Full verification list
+  document.getElementById('verification-list').innerHTML =
+    `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr>
+        <th style="text-align:left;padding:4px 8px;color:var(--text2);border-bottom:1px solid var(--border);width:30px;">Orden</th>
+        <th style="text-align:left;padding:4px 8px;color:var(--text2);border-bottom:1px solid var(--border);">Canción</th>
+        <th style="text-align:left;padding:4px 8px;color:var(--text2);border-bottom:1px solid var(--border);">Artista</th>
+      </tr></thead>
+      <tbody>${played.map((idx, order) =>
+        `<tr style="border-bottom:1px solid var(--border)${order % 2 === 0 ? '' : ';background:var(--bg)'}">
+          <td style="padding:5px 8px;font-weight:600;color:var(--text2);">${order + 1}</td>
+          <td style="padding:5px 8px;font-weight:500;">${songs[idx].title}</td>
+          <td style="padding:5px 8px;color:var(--text2);">${songs[idx].artist}</td>
+        </tr>`
+      ).join('')}</tbody>
+    </table>`;
+}
+
+function toggleVerification() {
+  const panel = document.getElementById('verification-panel');
+  const btn = event.target;
+  const visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? 'Ver listado completo ↓' : 'Ocultar listado ↑';
 }
 
 async function triggerSuspense() {
@@ -905,24 +942,25 @@ async function buildPrint() {
 
   const area = document.getElementById('print-cartons-area');
   area.innerHTML = '';
-  const grid = document.createElement('div');
-  grid.className = 'print-grid';
+  area.style.display = 'grid';
 
   for (let c = 0; c < qty; c++) {
     const seed = Math.floor(Math.random() * 9999999);
     const cells = makeCarton(songList, seed);
     const wrap = document.createElement('div');
     wrap.className = 'p-carton';
-    wrap.innerHTML = `<div class="p-title">Bingo Musical — Cartón #${c + 1}</div>
+    wrap.innerHTML = `<div class="p-title">🎵 Bingo Musical — Cartón ${c + 1}</div>
       <div class="p-letters"><span class="p-letter">B</span><span class="p-letter">I</span><span class="p-letter">N</span><span class="p-letter">G</span><span class="p-letter">O</span></div>
       <div class="p-grid">${cells.map(s => `<div class="p-cell${s.free ? ' free' : ''}">
         <span>${s.free ? '★ LIBRE' : s.title}</span>
         ${!s.free && s.artist ? `<span class="p-artist">${s.artist}</span>` : ''}
       </div>`).join('')}</div>`;
-    grid.appendChild(wrap);
+    area.appendChild(wrap);
   }
-  area.appendChild(grid);
-  document.getElementById('print-actions').style.display = 'flex';
+
+  const actions = document.getElementById('print-actions');
+  actions.style.display = 'flex';
+  document.getElementById('print-count-label').textContent = qty + ' cartones listos para imprimir';
 }
 
 // ===================== CANVAS (TV particles) =====================
