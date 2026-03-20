@@ -47,6 +47,16 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 .screen{display:none;min-height:100vh;}
 .screen.active{display:flex;flex-direction:column;}
 
+/* DIRECTOR NAV BAR */
+.dir-nav{display:none;position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 1rem;}
+.dir-nav.visible{display:flex;}
+.dir-nav-inner{display:flex;align-items:center;gap:0;width:100%;max-width:720px;margin:0 auto;}
+.dir-nav-tab{padding:12px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;transition:color .15s;}
+.dir-nav-tab:hover{color:var(--text);}
+.dir-nav-tab.active{color:var(--text);border-bottom-color:var(--text);}
+.dir-nav-sala{margin-left:auto;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;}
+.dir-nav-code{font-weight:700;color:var(--text);letter-spacing:.06em;font-size:13px;}
+
 /* ============ HOME ============ */
 #home{align-items:center;justify-content:center;padding:2rem;gap:20px;text-align:center;}
 .home-logo{font-size:40px;margin-bottom:4px;}
@@ -152,6 +162,20 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 </head>
 <body>
 
+<!-- ===== DIRECTOR NAV (persistent) ===== -->
+<nav class="dir-nav" id="dir-nav">
+  <div class="dir-nav-inner">
+    <button class="dir-nav-tab active" id="nav-director" onclick="dirNavGo('director')">🎛️ Director</button>
+    <button class="dir-nav-tab" id="nav-tv-pre" onclick="dirNavGo('tv-pre')">📺 Pantalla TV</button>
+    <button class="dir-nav-tab" id="nav-print-view" onclick="dirNavGo('print-view')">🖨️ Imprimir</button>
+    <div class="dir-nav-sala">
+      <span>Sala:</span>
+      <span class="dir-nav-code" id="nav-sala-code">—</span>
+      <button class="btn-ghost" style="font-size:11px;color:var(--red);" onclick="endGame()">Terminar</button>
+    </div>
+  </div>
+</nav>
+
 <!-- ===== HOME ===== -->
 <div id="home" class="screen active">
   <div class="home-logo">🎵</div>
@@ -200,10 +224,9 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 
   <div>
     <div class="label">Lista de canciones</div>
-    <div class="hint" style="margin-bottom:6px;">Formato: número, nombre, artista — una por línea, separadas por coma</div>
-    <textarea id="songs-input" placeholder="1, Blinding Lights, The Weeknd
-2, Hawái, Maluma
-3, Shape of You, Ed Sheeran"></textarea>
+    <div class="hint" style="margin-bottom:6px;">Pega directamente desde Google Sheets, o escribe: número, nombre, artista</div>
+    <textarea id="songs-input" oninput="previewSongs()" placeholder="Pega aquí directamente desde Google Sheets&#10;&#10;O escribe manualmente:&#10;1, Blinding Lights, The Weeknd&#10;2, Hawái, Maluma"></textarea>
+    <div id="songs-preview" style="display:none;margin-top:8px;"></div>
   </div>
 
   <div class="row">
@@ -215,9 +238,8 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 
 <!-- ===== DIRECTOR GAME ===== -->
 <div id="director" class="screen">
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem 0;">
+  <div style="padding:.75rem 1.25rem 0;">
     <h2 style="font-size:17px;font-weight:600;">Director</h2>
-    <button class="btn-ghost" onclick="endGame()">Terminar partida</button>
   </div>
 
   <div style="padding:0 1.25rem;margin-top:10px;">
@@ -256,7 +278,6 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
   <div style="padding:0 1.25rem;margin-top:12px;" class="row">
     <button class="btn btn-primary" onclick="pullSong()">Sacar canción</button>
     <button class="btn btn-secondary btn-sm" onclick="resetGame()">Reiniciar</button>
-    <button class="btn btn-secondary btn-sm" onclick="goTo('tv-pre')">Ver pantalla TV</button>
   </div>
 
   <div id="hist-wrap" style="display:none;padding:0 1.25rem;margin-top:12px;">
@@ -268,7 +289,7 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
 
 <!-- ===== TV PRE (waiting) ===== -->
 <div id="tv-pre" class="screen" style="background:#08080e;align-items:center;justify-content:center;">
-  <button class="tv-back no-print" onclick="goTo('home')">← Inicio</button>
+  <button class="tv-back no-print" onclick="dirNavGo('director')">← Director</button>
   <button class="tv-fullscreen no-print" onclick="toggleFS()">⛶ Pantalla completa</button>
   <div style="text-align:center;color:#fff;z-index:2;padding:2rem;">
     <div style="font-size:42px;margin-bottom:8px;">🎵</div>
@@ -361,10 +382,10 @@ textarea{resize:vertical;min-height:140px;font-size:12px;font-family:monospace;}
   <div class="print-header no-print">
     <div>
       <h2 style="font-size:18px;font-weight:600;">Imprimir cartones</h2>
-      <p class="hint">Necesitas tener una sala activa con canciones cargadas</p>
+      <p class="hint">La sala activa se carga automáticamente</p>
     </div>
     <div class="row">
-      <button class="btn-ghost" onclick="goTo('home')">← Inicio</button>
+      <button class="btn-ghost" onclick="dirNavGo('director')">← Director</button>
     </div>
   </div>
 
@@ -415,12 +436,39 @@ let confList = [];
 let cdInterval = null;
 
 // ===================== NAVIGATION =====================
+const DIR_SCREENS = ['director','tv-pre','tv','print-view'];
+
+function showDirectorNav(show) {
+  document.getElementById('dir-nav').classList.toggle('visible', show);
+}
+
 function goTo(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
+  const isDir = DIR_SCREENS.includes(id) && currentSala;
+  showDirectorNav(isDir);
   if (id === 'tv' || id === 'tv-pre') startCanvas();
   else stopCanvas();
+}
+
+function dirNavGo(id) {
+  // Update active tab
+  document.querySelectorAll('.dir-nav-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('nav-' + id);
+  if (tab) tab.classList.add('active');
+
+  if (id === 'tv-pre') {
+    // Auto-fill code
+    const inp = document.getElementById('tv-sala-input');
+    if (inp && currentSala) inp.value = currentSala;
+  }
+  if (id === 'print-view') {
+    // Auto-fill print sala input
+    const inp = document.getElementById('print-sala-input');
+    if (inp && currentSala) inp.value = currentSala;
+  }
+  goTo(id);
 }
 
 // ===================== UTILS =====================
@@ -497,17 +545,78 @@ const EXAMPLE = `1, Blinding Lights, The Weeknd
 function loadExample() {
   document.getElementById('songs-input').value = EXAMPLE;
   if (!document.getElementById('sala-input').value) randomCode();
+  previewSongs();
 }
 
 // ===================== PARSE SONGS =====================
 function parseSongs(raw) {
   const lines = raw.split('\n').filter(l => l.trim());
   const res = [];
+  let autoNum = 1;
+
   for (const l of lines) {
-    const p = l.split(/,|\t/).map(x => x.trim());
-    if (p.length >= 2) res.push({ num: p[0], title: p[1], artist: p.slice(2).join(', ') });
+    // Split by tab first (Google Sheets), then by comma if no tabs found
+    let parts;
+    if (l.includes('\t')) {
+      parts = l.split('\t').map(x => x.trim()).filter(x => x);
+    } else {
+      parts = l.split(',').map(x => x.trim()).filter(x => x);
+    }
+    if (!parts.length) continue;
+
+    // Detect if first part is a number (index)
+    const firstIsNum = /^\d+$/.test(parts[0]);
+    let num, title, artist;
+
+    if (firstIsNum && parts.length >= 2) {
+      num = parts[0];
+      title = parts[1];
+      artist = parts.slice(2).join(', ');
+    } else if (!firstIsNum && parts.length >= 1) {
+      // No number column — assign auto
+      num = String(autoNum);
+      title = parts[0];
+      artist = parts.slice(1).join(', ');
+    } else {
+      continue;
+    }
+
+    if (title) {
+      res.push({ num, title, artist: artist || '' });
+      autoNum++;
+    }
   }
   return res;
+}
+
+function previewSongs() {
+  const raw = document.getElementById('songs-input').value.trim();
+  if (!raw) { document.getElementById('songs-preview').style.display = 'none'; return; }
+  const parsed = parseSongs(raw);
+  const box = document.getElementById('songs-preview');
+  if (!parsed.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const ok = parsed.length >= 25;
+  box.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span style="font-size:13px;font-weight:500;color:${ok ? 'var(--green)' : 'var(--red)'};">
+      ${ok ? '✓' : '⚠'} ${parsed.length} canciones detectadas${!ok ? ' — necesitas al menos 25' : ''}
+    </span>
+  </div>
+  <div style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:var(--bg2);">
+      <th style="padding:5px 8px;text-align:left;color:var(--text2);font-weight:500;">#</th>
+      <th style="padding:5px 8px;text-align:left;color:var(--text2);font-weight:500;">Canción</th>
+      <th style="padding:5px 8px;text-align:left;color:var(--text2);font-weight:500;">Artista</th>
+    </tr></thead>
+    <tbody>${parsed.slice(0, 60).map((s, i) =>
+      `<tr style="border-top:1px solid var(--border)${i % 2 === 0 ? '' : ';background:var(--bg2)'}">
+        <td style="padding:4px 8px;color:var(--text2);">${s.num}</td>
+        <td style="padding:4px 8px;">${s.title}</td>
+        <td style="padding:4px 8px;color:var(--text2);">${s.artist}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
 }
 
 // ===================== DIRECTOR: START GAME =====================
@@ -524,6 +633,10 @@ async function startGame() {
   songs = parsed;
   currentSala = code;
 
+  // Save to session so nav survives tab switches
+  sessionStorage.setItem('bingo_sala', code);
+  sessionStorage.setItem('bingo_songs', JSON.stringify(parsed));
+
   // Write to Firebase
   await db.ref('salas/' + code).set({
     songs: songs,
@@ -533,7 +646,9 @@ async function startGame() {
     createdAt: Date.now()
   });
 
+  document.getElementById('nav-sala-code').textContent = code;
   goTo('director');
+  showDirectorNav(true);
   document.getElementById('d-sala-code').textContent = code;
   updateDStats();
   generateQR('d-qr', getAppURL() + '?join=' + code, 64);
@@ -609,6 +724,9 @@ async function endGame() {
   if (!confirm('¿Terminar y eliminar la partida?')) return;
   if (currentSala) await db.ref('salas/' + currentSala).remove();
   currentSala = null; songs = []; currentSong = null;
+  sessionStorage.removeItem('bingo_sala');
+  sessionStorage.removeItem('bingo_songs');
+  showDirectorNav(false);
   goTo('home');
 }
 
@@ -852,13 +970,51 @@ function launchConfetti() {
   }));
 }
 
-// ===================== AUTO JOIN FROM URL =====================
-window.addEventListener('load', () => {
+// ===================== AUTO JOIN FROM URL + SESSION RESTORE =====================
+window.addEventListener('load', async () => {
   const params = new URLSearchParams(window.location.search);
   const joinCode = params.get('join');
   if (joinCode) {
     document.getElementById('join-code').value = joinCode.toUpperCase();
     goTo('join');
+    return;
+  }
+
+  // Restore director session if exists
+  const savedSala = sessionStorage.getItem('bingo_sala');
+  const savedSongs = sessionStorage.getItem('bingo_songs');
+  if (savedSala && savedSongs) {
+    try {
+      const snap = await db.ref('salas/' + savedSala).get();
+      if (snap.exists()) {
+        currentSala = savedSala;
+        songs = JSON.parse(savedSongs);
+        const data = snap.val();
+        const played = data.played || [];
+        currentSong = data.current || null;
+
+        document.getElementById('nav-sala-code').textContent = savedSala;
+        document.getElementById('d-sala-code').textContent = savedSala;
+        updateDStats(played.length);
+        updateHist(played);
+        generateQR('d-qr', getAppURL() + '?join=' + savedSala, 64);
+
+        if (currentSong) {
+          document.getElementById('d-placeholder').style.display = 'none';
+          document.getElementById('d-current').style.display = 'block';
+          document.getElementById('d-num').textContent = '#' + currentSong.num;
+          document.getElementById('d-song').textContent = currentSong.title;
+          document.getElementById('d-artist').textContent = currentSong.artist;
+          document.getElementById('d-yt').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(currentSong.title + ' ' + currentSong.artist);
+        }
+
+        goTo('director');
+        showDirectorNav(true);
+        return;
+      }
+    } catch(e) {}
+    sessionStorage.removeItem('bingo_sala');
+    sessionStorage.removeItem('bingo_songs');
   }
 });
 </script>
