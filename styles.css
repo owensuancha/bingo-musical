@@ -236,7 +236,7 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .win-cols{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 10px 40px;}
 .win-cols label{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;}
 .win-cols label:has(input:checked){border-color:var(--green);color:var(--green);background:rgba(0,194,124,.08);}
-.win-cols input[type=checkbox]{accent-color:var(--green);}
+.win-cols input[type=checkbox]{accent-color:var(--green);width:auto;padding:0;border:none;background:none;flex:none;}
 
 /* ===== Reclamos de Bingo ===== */
 .claim-alert{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(232,184,75,.12);border:1px solid var(--gold);border-radius:var(--radius-sm);margin-bottom:8px;animation:claimPulse 1.4s ease-in-out infinite;}
@@ -252,7 +252,7 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .winners-title{font-size:13px;font-weight:600;color:var(--gold);margin:12px 0 8px;}
 .winner-option{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;font-size:14px;}
 .winner-option:has(input:checked){border-color:var(--gold);background:rgba(232,184,75,.08);}
-.winner-option input{accent-color:var(--gold);}
+.winner-option input{accent-color:var(--gold);width:auto;padding:0;border:none;background:none;flex:none;}
 .round-ended-msg{padding:12px 14px;background:rgba(0,194,124,.1);border:1px solid var(--green);border-radius:var(--radius-sm);font-size:14px;font-weight:600;color:var(--green);}
 
 /* ===== Popup jugador ===== */
