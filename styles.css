@@ -187,6 +187,10 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .p-cell{border:1.5px solid #999;border-radius:5px;padding:4px;font-size:10px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.3;gap:2px;font-weight:700;}
 .p-cell .p-artist{font-size:8px;color:#444;font-weight:400;}
 .p-cell.free{background:#e8f5ee;font-weight:700;font-size:13px;color:#1D9E75;}
+.p-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:4px;row-gap:1px;max-width:100%;}
+.p-num{font-size:10px;font-weight:800;line-height:1.1;color:#C99A2E;background:rgba(201,154,46,.12);border:1.5px solid #C99A2E;border-radius:5px;padding:0 4px;}
+.p-stitle{font-size:10px;font-weight:700;overflow-wrap:anywhere;max-width:100%;}
+.p-wm{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:9px;color:#C99A2E;text-align:center;margin-top:4px;letter-spacing:.03em;}
 
 /* SONGS PREVIEW */
 .songs-preview-ok{color:var(--green);font-size:13px;font-weight:500;}
@@ -227,6 +231,9 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
   .p-cell{font-size:11pt;font-weight:700;border:1.5px solid #999;border-radius:4px;overflow:hidden;padding:1mm;line-height:1.2;}
   .p-cell .p-artist{font-size:8pt;font-weight:400;color:#555;}
   .p-cell.free{font-size:14pt;background:#e8f5ee;color:#1D9E75;}
+  .p-num{font-size:11pt;background:rgba(201,154,46,.12);border-color:#C99A2E;color:#5a4410;}
+  .p-stitle{font-size:11pt;}
+  .p-wm{font-size:9pt;margin-top:1mm;flex-shrink:0;}
 }
 
 /* ===== Modo de ganar (setup) ===== */
