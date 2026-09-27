@@ -1,0 +1,169 @@
+// Vista y lógica del director (setup + panel del director)
+
+import {db,state,goTo,showDirectorNav,getAppURL,generateQR} from './shared.js';
+import {parseSongs} from './game-logic.js';
+
+export function randomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];document.getElementById('sala-input').value=r;}
+
+const EXAMPLE=`1, Blinding Lights, The Weeknd
+2, Hawái, Maluma
+3, Shape of You, Ed Sheeran
+4, Con Calma, Daddy Yankee
+5, Someone Like You, Adele
+6, Tusa, Karol G
+7, Despacito, Luis Fonsi
+8, Bohemian Rhapsody, Queen
+9, Thriller, Michael Jackson
+10, Bad Guy, Billie Eilish
+11, La Bicicleta, Carlos Vives
+12, Vivir Mi Vida, Marc Anthony
+13, Felices los 4, Maluma
+14, Perfect, Ed Sheeran
+15, Shake It Off, Taylor Swift
+16, Uptown Funk, Bruno Mars
+17, Stay With Me, Sam Smith
+18, Lean On, Major Lazer
+19, La Tortura, Shakira
+20, Waka Waka, Shakira
+21, Mi Gente, J Balvin
+22, Thinking Out Loud, Ed Sheeran
+23, Cheap Thrills, Sia
+24, Closer, The Chainsmokers
+25, Love Yourself, Justin Bieber
+26, Gasolina, Daddy Yankee
+27, Loca, Shakira
+28, Obsesión, Aventura
+29, Propuesta Indecente, Romeo Santos
+30, La Camisa Negra, Juanes`;
+
+export function loadExample(){document.getElementById('songs-input').value=EXAMPLE;if(!document.getElementById('sala-input').value)randomCode();previewSongs();}
+
+export function previewSongs(){
+  const raw=document.getElementById('songs-input').value.trim();
+  const box=document.getElementById('songs-preview');
+  if(!raw){box.style.display='none';return;}
+  const parsed=parseSongs(raw);
+  if(!parsed.length){box.style.display='none';return;}
+  box.style.display='block';
+  const ok=parsed.length>=25;
+  box.innerHTML=`<div style="margin-bottom:8px;"><span class="${ok?'songs-preview-ok':'songs-preview-warn'}">${ok?'✓':'⚠'} ${parsed.length} canciones detectadas${!ok?' — necesitas al menos 25':''}</span></div>
+  <div style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);">
+  <table class="preview-table">
+    <thead><tr><th>#</th><th>Canción</th><th>Artista</th></tr></thead>
+    <tbody>${parsed.slice(0,60).map(s=>`<tr><td style="color:var(--text2);">${s.num}</td><td>${s.title}</td><td style="color:var(--text2);">${s.artist}</td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+export async function startGame(){
+  const code=document.getElementById('sala-input').value.trim().toUpperCase();
+  const raw=document.getElementById('songs-input').value.trim();
+  const err=document.getElementById('setup-error');
+  if(!code||code.length<3){err.textContent='Ingresa un código de sala (mínimo 3 caracteres).';err.style.display='block';return;}
+  const parsed=parseSongs(raw);
+  if(parsed.length<25){err.textContent='Necesitas al menos 25 canciones para generar cartones.';err.style.display='block';return;}
+  err.style.display='none';
+  state.songs=parsed;state.currentSala=code;
+  sessionStorage.setItem('bingo_sala',code);
+  sessionStorage.setItem('bingo_songs',JSON.stringify(parsed));
+  await db.ref('salas/'+code).set({songs:state.songs,played:[],current:null,tvState:'waiting',createdAt:Date.now()});
+  document.getElementById('nav-sala-code').textContent=code;
+  goTo('director');showDirectorNav(true);
+  document.getElementById('d-sala-code').textContent=code;
+  updateDStats();
+  generateQR('d-qr',getAppURL()+'?join='+code,64);
+  db.ref('salas/'+code+'/played').on('value',snap=>{});
+}
+
+export async function pullSong(){
+  if(!state.currentSala)return;
+  const snap=await db.ref('salas/'+state.currentSala).get();
+  const data=snap.val();if(!data)return;
+  const played=data.played||[];
+  const avail=state.songs.filter((_,i)=>!played.includes(i));
+  if(!avail.length){alert('¡Se acabaron todas las canciones!');return;}
+  const pick=avail[Math.floor(Math.random()*avail.length)];
+  const idx=state.songs.indexOf(pick);
+  played.push(idx);state.currentSong=pick;
+  await db.ref('salas/'+state.currentSala).update({played,current:pick,tvState:'waiting'});
+  document.getElementById('d-placeholder').style.display='none';
+  document.getElementById('d-current').style.display='block';
+  document.getElementById('d-num').textContent='#'+pick.num;
+  document.getElementById('d-song').textContent=pick.title;
+  document.getElementById('d-artist').textContent=pick.artist;
+  document.getElementById('d-yt').href='https://www.youtube.com/results?search_query='+encodeURIComponent(pick.title+' '+pick.artist);
+  updateDStats(played.length);updateHist(played);
+}
+
+export function updateDStats(n){
+  document.getElementById('d-total').textContent=state.songs.length;
+  document.getElementById('d-played').textContent=n!==undefined?n:0;
+  document.getElementById('d-left').textContent=state.songs.length-(n!==undefined?n:0);
+}
+
+export function updateHist(played){
+  const w=document.getElementById('hist-wrap');
+  w.style.display=played.length?'block':'none';
+  document.getElementById('hist-pills').innerHTML=played.map(i=>`<span class="pill"><b>${state.songs[i].num}</b> ${state.songs[i].title}</span>`).join('');
+  document.getElementById('verification-list').innerHTML=`<table class="verif-table">
+    <thead><tr><th>Orden</th><th>Canción</th><th>Artista</th></tr></thead>
+    <tbody>${played.map((idx,order)=>`<tr><td style="font-weight:600;color:var(--green);">${order+1}</td><td style="font-weight:500;">${state.songs[idx].title}</td><td style="color:var(--text2);">${state.songs[idx].artist}</td></tr>`).join('')}</tbody>
+  </table>`;
+}
+
+export function toggleVerification(){
+  const p=document.getElementById('verification-panel');
+  const visible=p.style.display!=='none';
+  p.style.display=visible?'none':'block';
+  event.target.textContent=visible?'Ver listado completo ↓':'Ocultar listado ↑';
+}
+
+export async function triggerSuspense(){
+  if(!state.currentSala||!state.currentSong){alert('Primero saca una canción.');return;}
+  await db.ref('salas/'+state.currentSala+'/tvState').set('suspense');
+}
+
+export async function resetGame(){
+  if(!confirm('¿Reiniciar la partida? Se borra el historial.'))return;
+  state.currentSong=null;
+  await db.ref('salas/'+state.currentSala).update({played:[],current:null,tvState:'waiting'});
+  document.getElementById('d-placeholder').style.display='block';
+  document.getElementById('d-current').style.display='none';
+  updateDStats(0);updateHist([]);
+}
+
+export async function endGame(){
+  if(!confirm('¿Terminar y eliminar la partida?'))return;
+  if(state.currentSala)await db.ref('salas/'+state.currentSala).remove();
+  state.currentSala=null;state.songs=[];state.currentSong=null;
+  sessionStorage.removeItem('bingo_sala');sessionStorage.removeItem('bingo_songs');
+  showDirectorNav(false);goTo('home');
+}
+
+// Restaurar sesión del director al recargar (si hay sala en sessionStorage)
+export async function restoreDirectorSession(){
+  const savedSala=sessionStorage.getItem('bingo_sala');
+  const savedSongs=sessionStorage.getItem('bingo_songs');
+  if(!savedSala||!savedSongs)return false;
+  try{
+    const snap=await db.ref('salas/'+savedSala).get();
+    if(snap.exists()){
+      state.currentSala=savedSala;state.songs=JSON.parse(savedSongs);
+      const data=snap.val();const played=data.played||[];state.currentSong=data.current||null;
+      document.getElementById('nav-sala-code').textContent=savedSala;
+      document.getElementById('d-sala-code').textContent=savedSala;
+      updateDStats(played.length);updateHist(played);
+      generateQR('d-qr',getAppURL()+'?join='+savedSala,64);
+      if(state.currentSong){
+        document.getElementById('d-placeholder').style.display='none';
+        document.getElementById('d-current').style.display='block';
+        document.getElementById('d-num').textContent='#'+state.currentSong.num;
+        document.getElementById('d-song').textContent=state.currentSong.title;
+        document.getElementById('d-artist').textContent=state.currentSong.artist;
+        document.getElementById('d-yt').href='https://www.youtube.com/results?search_query='+encodeURIComponent(state.currentSong.title+' '+state.currentSong.artist);
+      }
+      goTo('director');showDirectorNav(true);return true;
+    }
+  }catch(e){}
+  sessionStorage.removeItem('bingo_sala');sessionStorage.removeItem('bingo_songs');
+  return false;
+}
