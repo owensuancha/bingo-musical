@@ -209,9 +209,12 @@ export function renderCarton(){
     d.className='cell'+(s.free?' free':'')+(state.playerMarks[i]?' marked':'');
     if(s.free){d.textContent='★ LIBRE';}
     else{
-      const t=document.createElement('span');t.textContent=s.title;
+      const head=document.createElement('span');head.className='cell-head';
+      const n=document.createElement('span');n.className='cell-num';n.textContent='#'+s.num;
+      const t=document.createElement('span');t.className='cell-title';t.textContent=s.title;
+      head.appendChild(n);head.appendChild(t);
       const a=document.createElement('span');a.className='cell-artist';a.textContent=s.artist;
-      d.appendChild(t);d.appendChild(a);
+      d.appendChild(head);d.appendChild(a);
     }
     if(!s.free)d.onclick=()=>{state.playerMarks[i]=!state.playerMarks[i];renderCarton();checkWin();persistMarks();};
     g.appendChild(d);
