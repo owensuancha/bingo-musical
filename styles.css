@@ -267,3 +267,17 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .tv-winner-wrap{text-align:center;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);}
 .tv-winner-label{font-size:18px;letter-spacing:.3em;text-transform:uppercase;color:var(--green);margin-bottom:16px;}
 .tv-winner-name{font-family:var(--font-display);font-size:clamp(40px,8vw,86px);font-weight:900;color:var(--gold);line-height:1.1;text-shadow:0 4px 30px rgba(232,184,75,.35);}
+
+/* ===== Buscador del director ===== */
+.search-box{margin-top:4px;}
+.search-box input{width:100%;margin-top:6px;}
+#search-results{margin-top:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;max-height:300px;overflow-y:auto;}
+.search-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;}
+.search-row:last-child{border-bottom:none;}
+.search-song{color:var(--text);display:flex;align-items:baseline;gap:8px;min-width:0;}
+.search-song b{color:var(--text2);font-weight:700;flex:none;}
+.search-song small{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.search-badge{flex:none;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 10px;border-radius:12px;text-transform:none;}
+.search-badge.out{background:rgba(0,194,124,.15);color:var(--green);}
+.search-badge.pending{background:rgba(255,77,77,.15);color:var(--red);}
+.search-empty{padding:12px;font-size:13px;color:var(--text2);}

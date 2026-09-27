@@ -15,6 +15,7 @@ export const db = firebase.database();
 // Estado compartido entre director, jugador y TV (mutar propiedades, no reasignar)
 export const state = {
   songs: [],
+  played: [],
   currentSala: null,
   currentSong: null,
   playerSeed: 0,

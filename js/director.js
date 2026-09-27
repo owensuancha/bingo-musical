@@ -80,7 +80,7 @@ export async function startGame(){
   }
   colsErr.style.display='none';
   err.style.display='none';
-  state.songs=parsed;state.currentSala=code;
+  state.songs=parsed;state.currentSala=code;state.played=[];
   state.winMode=config.winMode;state.winColumns=config.winColumns;
   sessionStorage.setItem('bingo_sala',code);
   sessionStorage.setItem('bingo_songs',JSON.stringify(parsed));
@@ -121,6 +121,7 @@ export function updateDStats(n){
 }
 
 export function updateHist(played){
+  state.played=played;
   const w=document.getElementById('hist-wrap');
   w.style.display=played.length?'block':'none';
   document.getElementById('hist-pills').innerHTML=played.map(i=>`<span class="pill"><b>${state.songs[i].num}</b> ${state.songs[i].title}</span>`).join('');
@@ -135,6 +136,28 @@ export function toggleVerification(){
   const visible=p.style.display!=='none';
   p.style.display=visible?'none':'block';
   event.target.textContent=visible?'Ver listado completo ↓':'Ocultar listado ↑';
+}
+
+// Buscador sobre TODA la partida: verde "Ya salió" / rojo "NO HA SALIDO"
+export function searchSongs(){
+  const input=document.getElementById('song-search');
+  const box=document.getElementById('search-results');
+  if(!input||!box)return;
+  const q=input.value.trim().toLowerCase();
+  if(!q){box.style.display='none';box.innerHTML='';return;}
+  const played=new Set(state.played);
+  const hits=state.songs
+    .map((s,i)=>({s,i}))
+    .filter(({s})=>s.title.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)||String(s.num).toLowerCase().includes(q));
+  box.style.display='block';
+  if(!hits.length){box.innerHTML='<div class="search-empty">Sin resultados en esta partida.</div>';return;}
+  box.innerHTML=hits.slice(0,40).map(({s,i})=>{
+    const out=played.has(i);
+    return `<div class="search-row">
+      <span class="search-song"><b>#${esc(s.num)}</b> ${esc(s.title)}<small>${esc(s.artist)}</small></span>
+      <span class="search-badge ${out?'out':'pending'}">${out?'Ya salió':'NO HA SALIDO'}</span>
+    </div>`;
+  }).join('');
 }
 
 export async function triggerSuspense(){
