@@ -63,9 +63,10 @@ function setPlayerLabels(){
 
 export async function joinGame(){
   const code=document.getElementById('join-code').value.trim().toUpperCase();
-  const name=document.getElementById('join-name').value.trim()||'Jugador';
+  const name=document.getElementById('join-name').value.trim();
   const err=document.getElementById('join-error');
   if(!code){err.textContent='Ingresa el código de sala.';err.style.display='block';return;}
+  if(!name){err.textContent='Ingresa tu nombre para entrar.';err.style.display='block';return;}
   const snap=await db.ref('salas/'+code).get();
   if(!snap.exists()){err.textContent='Sala no encontrada. Verifica el código con el director.';err.style.display='block';return;}
   err.style.display='none';
