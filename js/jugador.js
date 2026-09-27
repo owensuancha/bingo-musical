@@ -250,7 +250,8 @@ export async function buildPrint(){
     const wrap=document.createElement('div');wrap.className='p-carton';
     wrap.innerHTML=`<div class="p-title">🎵 Bingo Musical — Cartón ${c+1}</div>
       <div class="p-letters"><span class="p-letter">B</span><span class="p-letter">I</span><span class="p-letter">N</span><span class="p-letter">G</span><span class="p-letter">O</span></div>
-      <div class="p-grid">${cells.map(s=>`<div class="p-cell${s.free?' free':''}"><span>${s.free?'★ LIBRE':s.title}</span>${!s.free&&s.artist?`<span class="p-artist">${s.artist}</span>`:''}</div>`).join('')}</div>`;
+      <div class="p-grid">${cells.map(s=>`<div class="p-cell${s.free?' free':''}">${s.free?'<span>★ LIBRE</span>':`<span class="p-head"><span class="p-num">#${s.num}</span><span class="p-stitle">${s.title}</span></span>`}${!s.free&&s.artist?`<span class="p-artist">${s.artist}</span>`:''}</div>`).join('')}</div>
+      <div class="p-wm">By OS</div>`;
     area.appendChild(wrap);
   }
   document.getElementById('print-actions').style.display='flex';
