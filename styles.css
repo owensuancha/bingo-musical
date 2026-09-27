@@ -231,6 +231,7 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
   .p-cell{font-size:11pt;font-weight:700;border:1.5px solid #999;border-radius:4px;overflow:hidden;padding:1mm;line-height:1.2;}
   .p-cell .p-artist{font-size:8pt;font-weight:400;color:#555;}
   .p-cell.free{font-size:14pt;background:#e8f5ee;color:#1D9E75;}
+  .p-title,.p-letter,.p-cell{color:#0a1a12;}
   .p-num{font-size:11pt;background:rgba(201,154,46,.12);border-color:#C99A2E;color:#5a4410;}
   .p-stitle{font-size:11pt;}
   .p-wm{font-size:9pt;margin-top:1mm;flex-shrink:0;}
