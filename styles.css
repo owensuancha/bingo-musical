@@ -237,3 +237,33 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .win-cols label{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;}
 .win-cols label:has(input:checked){border-color:var(--green);color:var(--green);background:rgba(0,194,124,.08);}
 .win-cols input[type=checkbox]{accent-color:var(--green);}
+
+/* ===== Reclamos de Bingo ===== */
+.claim-alert{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(232,184,75,.12);border:1px solid var(--gold);border-radius:var(--radius-sm);margin-bottom:8px;animation:claimPulse 1.4s ease-in-out infinite;}
+.claim-alert b{color:var(--gold);font-size:15px;}
+@keyframes claimPulse{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.25);}50%{box-shadow:0 0 0 6px rgba(232,184,75,0);}}
+.claim-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;flex-wrap:wrap;}
+.claim-item .claim-who{font-size:14px;font-weight:600;color:var(--text);}
+.claim-item .claim-status{font-size:12px;padding:3px 10px;border-radius:12px;font-weight:600;}
+.claim-status.pending{background:rgba(232,184,75,.15);color:var(--gold);}
+.claim-status.confirmed{background:rgba(0,194,124,.15);color:var(--green);}
+.claim-status.rejected{background:rgba(255,77,77,.15);color:var(--red);}
+.claim-actions{display:flex;gap:8px;}
+.winners-title{font-size:13px;font-weight:600;color:var(--gold);margin:12px 0 8px;}
+.winner-option{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;font-size:14px;}
+.winner-option:has(input:checked){border-color:var(--gold);background:rgba(232,184,75,.08);}
+.winner-option input{accent-color:var(--gold);}
+.round-ended-msg{padding:12px 14px;background:rgba(0,194,124,.1);border:1px solid var(--green);border-radius:var(--radius-sm);font-size:14px;font-weight:600;color:var(--green);}
+
+/* ===== Popup jugador ===== */
+.bingo-popup{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.bingo-popup-card{background:var(--bg);border:1px solid var(--gold);border-radius:16px;padding:2rem 1.5rem;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+.bingo-popup-emoji{font-size:44px;}
+.bingo-popup-title{font-family:var(--font-display);font-size:26px;font-weight:900;color:var(--gold);}
+.bingo-popup-title.deny{color:var(--red);}
+.bingo-popup-sub{font-size:14px;color:var(--text2);line-height:1.5;}
+
+/* ===== TV ganador ===== */
+.tv-winner-wrap{text-align:center;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);}
+.tv-winner-label{font-size:18px;letter-spacing:.3em;text-transform:uppercase;color:var(--green);margin-bottom:16px;}
+.tv-winner-name{font-family:var(--font-display);font-size:clamp(40px,8vw,86px);font-weight:900;color:var(--gold);line-height:1.1;text-shadow:0 4px 30px rgba(232,184,75,.35);}

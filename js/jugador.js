@@ -6,6 +6,8 @@ import {makeCarton,checkWin as checkWinLogic,normalizeMarks} from './game-logic.
 
 const LOCAL_KEY='bingo_player';
 let playerListener=null;
+let claimsListener=null;
+let ownClaimStatus=null;
 
 function baseMarks(){const m=new Array(25).fill(false);m[12]=true;return m;}
 
@@ -74,6 +76,7 @@ export async function joinGame(){
   savePlayerLocal();
   try{await playerRef().set({name,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks});}catch(e){}
   subscribePlayer();
+  subscribeClaims();
   renderCarton();goTo('carton');
 }
 
@@ -98,6 +101,7 @@ export async function restorePlayerSession(){
   }
   setPlayerLabels();
   subscribePlayer();
+  subscribeClaims();
   renderCarton();checkWin();
   goTo('carton');
   return true;
@@ -106,9 +110,63 @@ export async function restorePlayerSession(){
 export async function leaveGame(){
   if(playerListener&&state.currentSala){try{playerRef().off('value',playerListener);}catch(e){}}
   playerListener=null;
+  if(claimsListener&&state.currentSala){try{db.ref('salas/'+state.currentSala+'/claims').off('value',claimsListener);}catch(e){}}
+  claimsListener=null;ownClaimStatus=null;
   if(state.currentSala){try{await playerRef().remove();}catch(e){}}
   clearPlayerLocal();
+  closeBingoPopup();
   state.currentSala=null;state.songs=[];state.playerSeed=0;state.playerMarks=[];goTo('home');
+}
+
+// Suscripción al estado del propio reclamo (pending/confirmed/rejected)
+function subscribeClaims(){
+  if(claimsListener&&state.currentSala){try{db.ref('salas/'+state.currentSala+'/claims').off('value',claimsListener);}catch(e){}}
+  claimsListener=null;ownClaimStatus=null;
+  if(!state.currentSala)return;
+  claimsListener=db.ref('salas/'+state.currentSala+'/claims').on('value',snap=>{
+    const claims=snap.val()||{};
+    const own=claims[String(state.playerSeed)];
+    if(!own){ownClaimStatus=null;return;}
+    if(own.status===ownClaimStatus)return;
+    const prev=ownClaimStatus;
+    ownClaimStatus=own.status;
+    if(own.status==='rejected'){
+      showBingoPopup('Rechazado','El director rechazó tu reclamo. Puedes intentarlo de nuevo cuando quieras.',true);
+    }else if(own.status==='confirmed'){
+      showBingoPopup('¡Reclamo confirmado!','El director confirmó tu bingo. Espera el resultado de la ronda.',false);
+    }else if(own.status==='pending'&&prev==='rejected'){
+      showBingoPopup('¡BINGO, GANASTE!','Reclamo enviado de nuevo. El director está revisando tu cartón…',false);
+    }
+  });
+}
+
+// Popup del jugador (gana / no gana / rechazado / confirmado)
+export function showBingoPopup(title,sub,deny){
+  const p=document.getElementById('bingo-popup');
+  if(!p)return;
+  document.getElementById('bingo-popup-title').textContent=title;
+  document.getElementById('bingo-popup-title').classList.toggle('deny',!!deny);
+  document.getElementById('bingo-popup-sub').textContent=sub;
+  p.querySelector('.bingo-popup-emoji').textContent=deny?'🤔':'🎉';
+  p.style.display='flex';
+}
+export function closeBingoPopup(){
+  const p=document.getElementById('bingo-popup');
+  if(p)p.style.display='none';
+}
+
+// Reclamar bingo: valida con el modo de la sala y crea/actualiza el reclamo
+export function sayBingo(){
+  if(!state.currentSala)return;
+  const ok=checkWinLogic(state.playerMarks,state.winMode,state.winColumns);
+  if(!ok){
+    showBingoPopup('No es Bingo todavía','Tu cartón aún no cumple el patrón de esta sala. Sigue marcando y reclama de nuevo.',true);
+    return;
+  }
+  const ref=db.ref('salas/'+state.currentSala+'/claims/'+state.playerSeed);
+  ref.set({playerSeed:state.playerSeed,name:state.playerName,status:'pending',at:Date.now()}).catch(()=>{});
+  ownClaimStatus='pending';
+  showBingoPopup('¡BINGO, GANASTE!','El director está revisando tu cartón…',false);
 }
 
 export function renderCarton(){

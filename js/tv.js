@@ -3,6 +3,23 @@
 import {db,state,goTo,getAppURL,generateQR,setCanvasHooks} from './shared.js';
 
 let ptcAnim=null, ptcList=[], confList=[], cdInterval=null;
+let winnerShown=false, winnerName=null;
+
+function hideAllTvScreens(){
+  ['tv-waiting','tv-suspense','tv-countdown','tv-reveal','tv-winner'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+}
+
+// "¡{Nombre} GANÓ!" con confeti — se muestra al terminar la ronda el director
+function showWinner(name){
+  if(winnerShown&&winnerName===name)return; // no repetir confeti
+  hideAllTvScreens();
+  document.getElementById('tv-winner').style.display='block';
+  document.getElementById('tv-winner-name').textContent='¡'+name+' GANÓ!';
+  winnerShown=true;winnerName=name;
+  launchConfetti();
+}
 
 export async function tvConnect(){
   const code=document.getElementById('tv-sala-input').value.trim().toUpperCase();
@@ -19,6 +36,12 @@ export async function tvConnect(){
   if(state.tvListener)db.ref('salas/'+state.tvSala).off('value',state.tvListener);
   state.tvListener=db.ref('salas/'+state.tvSala).on('value',snap=>{
     const data=snap.val();if(!data)return;
+    // Ronda terminada → pantalla de ganador (prioridad sobre el flujo de canción)
+    if(data.roundEnded&&data.lastWinner){
+      showWinner(data.lastWinner.name);
+      return;
+    }
+    if(winnerShown){winnerShown=false;winnerName=null;setTVState('waiting');}
     const st=data.tvState||'waiting';const cur=data.current;
     if(st==='suspense'&&cur){runSuspenseSequence(cur);db.ref('salas/'+state.tvSala+'/tvState').set('playing');}
   });
@@ -30,7 +53,7 @@ export function disconnectTV(){
 }
 
 export function setTVState(st,song){
-  ['tv-waiting','tv-suspense','tv-countdown','tv-reveal'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  hideAllTvScreens();
   if(st==='waiting')document.getElementById('tv-waiting').style.display='block';
   else if(st==='suspense')document.getElementById('tv-suspense').style.display='block';
   else if(st==='countdown')document.getElementById('tv-countdown').style.display='block';

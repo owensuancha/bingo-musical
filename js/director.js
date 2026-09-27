@@ -91,6 +91,7 @@ export async function startGame(){
   updateDStats();
   generateQR('d-qr',getAppURL()+'?join='+code,64);
   db.ref('salas/'+code+'/played').on('value',snap=>{});
+  startRoomWatch();
 }
 
 export async function pullSong(){
@@ -144,7 +145,7 @@ export async function triggerSuspense(){
 export async function resetGame(){
   if(!confirm('¿Reiniciar la partida? Se borra el historial.'))return;
   state.currentSong=null;
-  await db.ref('salas/'+state.currentSala).update({played:[],current:null,tvState:'waiting'});
+  await db.ref('salas/'+state.currentSala).update({played:[],current:null,tvState:'waiting',claims:null,roundEnded:null,lastWinner:null,designatedSeed:null});
   document.getElementById('d-placeholder').style.display='block';
   document.getElementById('d-current').style.display='none';
   updateDStats(0);updateHist([]);
@@ -152,10 +153,148 @@ export async function resetGame(){
 
 export async function endGame(){
   if(!confirm('¿Terminar y eliminar la partida?'))return;
+  stopRoomWatch();
   if(state.currentSala)await db.ref('salas/'+state.currentSala).remove();
   state.currentSala=null;state.songs=[];state.currentSong=null;
   sessionStorage.removeItem('bingo_sala');sessionStorage.removeItem('bingo_songs');
   showDirectorNav(false);goTo('home');
+}
+
+// ===== RECLAMOS DE BINGO (panel del director) =====
+let roomWatch=null;
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+export function stopRoomWatch(){
+  if(roomWatch&&state.currentSala){try{db.ref('salas/'+state.currentSala).off('value',roomWatch);}catch(e){}}
+  roomWatch=null;
+}
+
+function startRoomWatch(){
+  if(!state.currentSala)return;
+  if(roomWatch)db.ref('salas/'+state.currentSala).off('value',roomWatch);
+  roomWatch=db.ref('salas/'+state.currentSala).on('value',snap=>{
+    renderClaims(snap.val());
+  });
+}
+
+function renderClaims(data){
+  const sec=document.getElementById('claims-section');
+  const list=document.getElementById('claims-list');
+  const wbox=document.getElementById('winners-box');
+  const wlist=document.getElementById('winners-list');
+  const rend=document.getElementById('round-ended-box');
+  if(!sec)return;
+  const claims=(data&&data.claims)||{};
+  const entries=Object.entries(claims);
+  const pending=entries.filter(([,c])=>c.status==='pending');
+  const confirmed=entries.filter(([,c])=>c.status==='confirmed');
+  const rejected=entries.filter(([,c])=>c.status==='rejected');
+  const roundEnded=!!(data&&data.roundEnded);
+  const lastWinner=(data&&data.lastWinner)||null;
+  const designated=data&&data.designatedSeed;
+
+  // Avisos de pendientes: "¡{Nombre} gritó Bingo!" + acciones
+  let html='';
+  for(const [id,c] of pending){
+    html+=`<div class="claim-alert">🔔 <b>¡${esc(c.name)} gritó Bingo!</b></div>
+    <div class="claim-item">
+      <span class="claim-who">${esc(c.name)}</span>
+      <span class="claim-status pending">Pendiente</span>
+      <span class="claim-actions">
+        <button class="btn btn-primary btn-sm" onclick="confirmClaim('${id}')">✅ Confirmar</button>
+        <button class="btn btn-secondary btn-sm" onclick="rejectClaim('${id}')">❌ Rechazar</button>
+      </span>
+    </div>`;
+  }
+  for(const [,c] of confirmed){
+    html+=`<div class="claim-item"><span class="claim-who">🏆 ${esc(c.name)}</span><span class="claim-status confirmed">Confirmado</span></div>`;
+  }
+  for(const [,c] of rejected){
+    html+=`<div class="claim-item" style="opacity:.55;"><span class="claim-who">${esc(c.name)}</span><span class="claim-status rejected">Rechazado — puede reclamar de nuevo</span></div>`;
+  }
+  list.innerHTML=html;
+
+  const showList=pending.length||confirmed.length||rejected.length;
+  sec.style.display=(showList||roundEnded)?'block':'none';
+
+  // Ganadores confirmados → designar quién gana
+  if(confirmed.length&&!roundEnded){
+    wbox.style.display='block';
+    wlist.innerHTML=confirmed.map(([id,c])=>{
+      const picked=String(designated)===String(c.playerSeed);
+      return `<label class="winner-option"><input type="radio" name="winner-pick" value="${c.playerSeed}" ${picked?'checked':''} onchange="designateWinner(this.value)"> <span>${esc(c.name)}</span> <span class="claim-status confirmed" style="margin-left:auto;">✓ Confirmado</span></label>`;
+    }).join('');
+  }else{
+    wbox.style.display='none';
+  }
+
+  // Ronda terminada → aviso + nueva ronda (la sala NO se borra)
+  if(roundEnded){
+    rend.style.display='block';
+    document.getElementById('round-ended-msg').textContent=
+      lastWinner?`🏁 Ronda terminada — ¡${lastWinner.name} ganó!`:'🏁 Ronda terminada.';
+  }else{
+    rend.style.display='none';
+  }
+}
+
+export async function confirmClaim(id){
+  if(!state.currentSala)return;
+  try{
+    await db.ref('salas/'+state.currentSala+'/claims/'+id+'/status').set('confirmed');
+    // Si nadie está designado aún, designar automáticamente al confirmado
+    const snap=await db.ref('salas/'+state.currentSala+'/designatedSeed').get();
+    if(!snap.exists()){
+      const cs=await db.ref('salas/'+state.currentSala+'/claims/'+id).get();
+      const c=cs.val();
+      if(c)await db.ref('salas/'+state.currentSala+'/designatedSeed').set(c.playerSeed);
+    }
+  }catch(e){}
+}
+
+export async function rejectClaim(id){
+  if(!state.currentSala)return;
+  try{await db.ref('salas/'+state.currentSala+'/claims/'+id+'/status').set('rejected');}catch(e){}
+}
+
+export async function designateWinner(seed){
+  if(!state.currentSala)return;
+  try{await db.ref('salas/'+state.currentSala+'/designatedSeed').set(parseInt(seed,10));}catch(e){}
+}
+
+// Elegido por el director tras designar: limpia los reclamos y sigue jugando
+export async function continueRound(){
+  if(!state.currentSala)return;
+  if(!confirm('¿Seguir jugando? Se limpian los reclamos de esta ronda.'))return;
+  try{await db.ref('salas/'+state.currentSala).update({claims:null,designatedSeed:null});}catch(e){}
+}
+
+// Termina la ronda: TV muestra "¡{Nombre} GANÓ!" con confeti; la sala NO se borra
+export async function endRound(){
+  if(!state.currentSala)return;
+  const snap=await db.ref('salas/'+state.currentSala+'/claims').get();
+  const claims=snap.val()||{};
+  const confirmed=Object.entries(claims).filter(([,c])=>c.status==='confirmed');
+  if(!confirmed.length){alert('Confirma al menos un reclamo (✅) antes de terminar la ronda.');return;}
+  const ds=await db.ref('salas/'+state.currentSala+'/designatedSeed').get();
+  const designated=ds.val();
+  const winner=confirmed.find(([,c])=>String(c.playerSeed)===String(designated))||confirmed[0];
+  const [,w]=winner;
+  try{
+    await db.ref('salas/'+state.currentSala).update({
+      roundEnded:true,
+      lastWinner:{name:w.name,seed:w.playerSeed,at:Date.now()},
+      claims:null,
+      designatedSeed:null
+    });
+  }catch(e){}
+}
+
+// Nueva ronda después de "Terminar ronda"
+export async function newRound(){
+  if(!state.currentSala)return;
+  try{await db.ref('salas/'+state.currentSala).update({roundEnded:null,lastWinner:null,claims:null,designatedSeed:null});}catch(e){}
 }
 
 // Restaurar sesión del director al recargar (si hay sala en sessionStorage)
@@ -182,7 +321,7 @@ export async function restoreDirectorSession(){
         document.getElementById('d-artist').textContent=state.currentSong.artist;
         document.getElementById('d-yt').href='https://www.youtube.com/results?search_query='+encodeURIComponent(state.currentSong.title+' '+state.currentSong.artist);
       }
-      goTo('director');showDirectorNav(true);return true;
+      goTo('director');showDirectorNav(true);startRoomWatch();return true;
     }
   }catch(e){}
   sessionStorage.removeItem('bingo_sala');sessionStorage.removeItem('bingo_songs');

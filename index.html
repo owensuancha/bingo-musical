@@ -148,6 +148,26 @@
       <button class="btn btn-secondary btn-sm" onclick="resetGame()">Reiniciar</button>
     </div>
 
+    <!-- ===== RECLAMOS DE BINGO ===== -->
+    <div id="claims-section" style="display:none;">
+      <div class="label">🔔 Reclamos de Bingo</div>
+      <div id="claims-list"></div>
+      <div id="winners-box" style="display:none;">
+        <div class="winners-title">🏆 Ganadores de esta ronda — elige quién gana</div>
+        <div id="winners-list"></div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn btn-primary btn-sm" onclick="endRound()">🏁 Terminar ronda</button>
+          <button class="btn btn-secondary btn-sm" onclick="continueRound()">▶ Seguir jugando</button>
+        </div>
+      </div>
+      <div id="round-ended-box" style="display:none;">
+        <div class="round-ended-msg" id="round-ended-msg"></div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn btn-primary btn-sm" onclick="newRound()">▶ Nueva ronda</button>
+        </div>
+      </div>
+    </div>
+
     <div id="hist-wrap" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="label">Historial</div>
@@ -214,6 +234,10 @@
       <div class="tv-r-song" id="tv-r-song"></div>
       <div class="tv-r-artist" id="tv-r-artist"></div>
     </div>
+    <div id="tv-winner" style="display:none;" class="tv-winner-wrap">
+      <div class="tv-winner-label">🏆 Fin de la ronda</div>
+      <div class="tv-winner-name" id="tv-winner-name"></div>
+    </div>
   </div>
 </div>
 
@@ -249,9 +273,19 @@
     <div class="player-note" style="margin-top:6px;">Toca una casilla para marcarla cuando adivines la canción</div>
     <div class="row" style="justify-content:center;margin-top:8px;">
       <button class="btn btn-secondary btn-sm no-print" onclick="clearMarks()">Limpiar marcas</button>
+      <button class="btn btn-primary no-print" id="claim-btn" onclick="sayBingo()">🎉 ¡BINGO!</button>
     </div>
   </div>
   <div style="height:1.5rem;"></div>
+  <!-- Popup de reclamo bingo -->
+  <div id="bingo-popup" class="bingo-popup" style="display:none;">
+    <div class="bingo-popup-card">
+      <div class="bingo-popup-emoji">🎉</div>
+      <div class="bingo-popup-title" id="bingo-popup-title">¡BINGO, GANASTE!</div>
+      <div class="bingo-popup-sub" id="bingo-popup-sub">El director está revisando tu cartón…</div>
+      <button class="btn btn-primary" onclick="closeBingoPopup()">Entendido</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===== PRINT ===== -->
