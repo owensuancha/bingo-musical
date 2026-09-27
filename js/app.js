@@ -18,7 +18,11 @@ Object.assign(window,{
 window.addEventListener('load',async()=>{
   const params=new URLSearchParams(window.location.search);
   const joinCode=params.get('join');
-  if(joinCode){document.getElementById('join-code').value=joinCode.toUpperCase();goTo('join');return;}
+  // Prioridad: sesión del director → sesión del jugador → deep-link ?join=
   if(await restoreDirectorSession())return;
-  await restorePlayerSession();
+  if(await restorePlayerSession(joinCode?joinCode.toUpperCase():null))return;
+  if(joinCode){
+    document.getElementById('join-code').value=joinCode.toUpperCase();
+    goTo('join');
+  }
 });

@@ -362,6 +362,8 @@ export async function restoreDirectorSession(){
   try{
     const snap=await db.ref('salas/'+savedSala).get();
     if(snap.exists()){
+      // Si el usuario navegó mientras se leía la sala, no secuestramos su pantalla
+      if(document.querySelector('.screen.active')?.id!=='home')return false;
       state.currentSala=savedSala;state.songs=JSON.parse(savedSongs);
       const data=snap.val();const played=data.played||[];state.currentSong=data.current||null;
       state.winMode=data.config?.winMode||'full';

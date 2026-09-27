@@ -85,14 +85,19 @@ export async function joinGame(){
 }
 
 // Restaurar sesión del jugador tras refrescar (Firebase primario, localStorage respaldo)
-export async function restorePlayerSession(){
+// joinCode: si viene en la URL y NO coincide con la sesión guardada, no restaura
+export async function restorePlayerSession(joinCode=null){
   let saved=null;
   try{saved=JSON.parse(localStorage.getItem(LOCAL_KEY));}catch(e){}
   if(!saved||!saved.sala||!saved.seed)return false;
+  if(joinCode&&joinCode!==String(saved.sala).toUpperCase())return false; // otra sala → pantalla de unión
   let data=null;
   try{const snap=await db.ref('salas/'+saved.sala).get();data=snap.exists()?snap.val():null;}
   catch(e){data=null;}
   if(!data){clearPlayerLocal();return false;} // la sala ya no existe
+  // El usuario pudo navegar mientras se leía la sala (p. ej. abrir el Modo TV):
+  // en ese caso no restauramos ni secuestramos la pantalla activa.
+  if(document.querySelector('.screen.active')?.id!=='home')return false;
   state.songs=data.songs||saved.songs||[];
   state.currentSala=saved.sala;
   state.playerName=saved.name||'Jugador';
@@ -102,6 +107,7 @@ export async function restorePlayerSession(){
   state.playerMarks=normalizeMarks(remote||saved.marks||baseMarks());
   if(!data.players||!data.players[saved.seed]){
     try{await playerRef().set({name:state.playerName,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks,connected:true});}catch(e){}
+    if(document.querySelector('.screen.active')?.id!=='home')return false; // navegó durante el await
   }
   setPlayerLabels();
   subscribePlayer();
