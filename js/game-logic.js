@@ -24,7 +24,20 @@ export function parseSongs(raw){
 // Líneas clásicas de bingo (5 filas + 5 columnas + 2 diagonales) en cuadrícula 5×5
 export const BINGO_LINES=[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],[0,6,12,18,24],[4,8,12,16,20]];
 
-// Victoria pura: todas las casillas de al menos una línea marcadas
-export function checkWin(marks){
+// Perímetro de la cuadrícula 5×5 (16 casillas) — modo "ring" (forma de O)
+export const RING_INDICES=[0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24];
+
+// Victoria pura por modo:
+//  - 'full'    (default): al menos una línea clásica completa
+//  - 'columns': todas las filas de CADA columna seleccionada (0=B,1=I,2=N,3=G,4=O); sin columnas → no gana
+//  - 'ring':    las 16 casillas del perímetro
+export function checkWin(marks,winMode='full',winColumns=[]){
+  if(winMode==='columns'){
+    if(!winColumns.length)return false;
+    return winColumns.every(col=>[0,1,2,3,4].every(row=>marks[row*5+col]));
+  }
+  if(winMode==='ring'){
+    return RING_INDICES.every(i=>marks[i]);
+  }
   return BINGO_LINES.some(l=>l.every(i=>marks[i]));
 }

@@ -78,3 +78,57 @@ test('BINGO_LINES: 12 lÃ­neas de 5 Ã­ndices vÃ¡lidos (0-24)',()=>{
     for(const i of l)assert.ok(i>=0&&i<24+1);
   }
 });
+
+// ===== Task 3: modos de victoria (full | columns | ring) =====
+// Firma nueva: checkWin(marks, winMode='full', winColumns=[])
+
+// Perímetro de una cuadrícula 5×5 (16 casillas) — forma de O/ring
+const RING=[0,1,2,3,4, 5,9, 10,14, 15,19, 20,21,22,23,24];
+function marksOf(idx){const m=new Array(25).fill(false);idx.forEach(i=>m[i]=true);return m;}
+
+test('full: por defecto gana con línea clásica (compatibilidad)',()=>{
+  assert.equal(checkWin(marksOf([0,1,2,3,4])),true);
+});
+
+test('columns: gana solo si TODAS las filas de las columnas seleccionadas están marcadas',()=>{
+  // columnas B(0) e I(1) completas = 10 casillas
+  const idx=[0,5,10,15,20, 1,6,11,16,21];
+  assert.equal(checkWin(marksOf(idx),'columns',[0,1]),true);
+});
+
+test('columns: una fila completa NO gana si las columnas seleccionadas están incompletas',()=>{
+  // fila 1 completa (línea clásica) pero columna O(4) casi vacía
+  assert.equal(checkWin(marksOf([5,6,7,8,9]),'columns',[4]),false);
+});
+
+test('columns: al menos una columna seleccionada basta',()=>{
+  const idx=[0,5,10,15,20]; // columna B completa
+  assert.equal(checkWin(marksOf(idx),'columns',[0]),true);
+});
+
+test('columns: sin columnas seleccionadas no se gana',()=>{
+  assert.equal(checkWin(marksOf([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]),'columns',[]),false);
+});
+
+test('ring: gana con las 16 casillas del perímetro marcadas',()=>{
+  assert.equal(checkWin(marksOf(RING),'ring'),true);
+});
+
+test('ring: una línea clásica NO gana si falta algún borde',()=>{
+  // fila 1 completa pero el anillo incompleto
+  assert.equal(checkWin(marksOf([5,6,7,8,9]),'ring'),false);
+});
+
+test('ring: perímetro incompleto no gana',()=>{
+  const incompleto=RING.filter(i=>i!==24); // falta una esquina
+  assert.equal(checkWin(marksOf(incompleto),'ring'),false);
+});
+
+test('RING tiene 16 casillas de borde sin incluir el centro',()=>{
+  assert.equal(RING.length,16);
+  assert.ok(!RING.includes(12));
+  for(const i of RING){
+    const r=Math.floor(i/5),c=i%5;
+    assert.ok(r===0||r===4||c===0||c===4,'índice '+i+' no es borde');
+  }
+});
