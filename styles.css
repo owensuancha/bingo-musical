@@ -281,3 +281,18 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .search-badge.out{background:rgba(0,194,124,.15);color:var(--green);}
 .search-badge.pending{background:rgba(255,77,77,.15);color:var(--red);}
 .search-empty{padding:12px;font-size:13px;color:var(--text2);}
+
+/* ===== Jugadores en vivo (panel director) ===== */
+.players-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;}
+.players-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.players-head .label{margin:0;}
+.players-count{font-size:12px;color:var(--text2);}
+.player-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.player-row:last-child{border-bottom:none;}
+.player-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.player-dot.on{background:var(--green);box-shadow:0 0 6px rgba(0,194,124,.6);}
+.player-dot.off{background:var(--text3);}
+.player-name{color:var(--text);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.player-name .trophy{margin-right:4px;}
+.player-progress{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;flex:none;}
+.players-empty{font-size:13px;color:var(--text2);padding:4px 0;}

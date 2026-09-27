@@ -7,6 +7,7 @@ import {makeCarton,checkWin as checkWinLogic,normalizeMarks} from './game-logic.
 const LOCAL_KEY='bingo_player';
 let playerListener=null;
 let claimsListener=null;
+let connListener=null;
 let ownClaimStatus=null;
 
 function baseMarks(){const m=new Array(25).fill(false);m[12]=true;return m;}
@@ -27,7 +28,8 @@ function clearPlayerLocal(){try{localStorage.removeItem(LOCAL_KEY);}catch(e){}}
 async function persistMarks(){
   savePlayerLocal();
   if(state.currentSala&&state.playerSeed){
-    try{await playerRef().set({name:state.playerName,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks});}
+    // update (no set) para no borrar el campo connected
+    try{await playerRef().update({name:state.playerName,marks:state.playerMarks});}
     catch(e){}
   }
 }
@@ -74,9 +76,10 @@ export async function joinGame(){
   state.playerMarks=baseMarks();
   setPlayerLabels();
   savePlayerLocal();
-  try{await playerRef().set({name,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks});}catch(e){}
+  try{await playerRef().set({name,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks,connected:true});}catch(e){}
   subscribePlayer();
   subscribeClaims();
+  watchConnection();
   renderCarton();goTo('carton');
 }
 
@@ -97,11 +100,12 @@ export async function restorePlayerSession(){
   const remote=data.players&&data.players[saved.seed]&&data.players[saved.seed].marks;
   state.playerMarks=normalizeMarks(remote||saved.marks||baseMarks());
   if(!data.players||!data.players[saved.seed]){
-    try{await playerRef().set({name:state.playerName,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks});}catch(e){}
+    try{await playerRef().set({name:state.playerName,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks,connected:true});}catch(e){}
   }
   setPlayerLabels();
   subscribePlayer();
   subscribeClaims();
+  watchConnection();
   renderCarton();checkWin();
   goTo('carton');
   return true;
@@ -112,10 +116,30 @@ export async function leaveGame(){
   playerListener=null;
   if(claimsListener&&state.currentSala){try{db.ref('salas/'+state.currentSala+'/claims').off('value',claimsListener);}catch(e){}}
   claimsListener=null;ownClaimStatus=null;
-  if(state.currentSala){try{await playerRef().remove();}catch(e){}}
+  if(connListener){try{db.ref('.info/connected').off('value',connListener);}catch(e){}}
+  connListener=null;
+  if(state.currentSala){
+    // cancelar onDisconnect para que no recrie el nodo tras remove()
+    try{await playerRef().child('connected').onDisconnect().cancel();}catch(e){}
+    try{await playerRef().remove();}catch(e){}
+  }
   clearPlayerLocal();
   closeBingoPopup();
   state.currentSala=null;state.songs=[];state.playerSeed=0;state.playerMarks=[];goTo('home');
+}
+
+// Estado en línea: connected=true + onDisconnect→false (para el panel del director)
+function watchConnection(){
+  if(connListener){try{db.ref('.info/connected').off('value',connListener);}catch(e){}}
+  connListener=null;
+  if(!state.currentSala)return;
+  connListener=db.ref('.info/connected').on('value',snap=>{
+    if(snap.val()===true&&state.currentSala&&state.playerSeed){
+      const r=playerRef().child('connected');
+      r.set(true).catch(()=>{});
+      r.onDisconnect().set(false).catch(()=>{});
+    }
+  });
 }
 
 // Suscripción al estado del propio reclamo (pending/confirmed/rejected)

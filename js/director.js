@@ -1,7 +1,7 @@
 // Vista y lógica del director (setup + panel del director)
 
 import {db,state,goTo,showDirectorNav,getAppURL,generateQR} from './shared.js';
-import {parseSongs} from './game-logic.js';
+import {parseSongs,normalizeMarks} from './game-logic.js';
 
 export function randomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];document.getElementById('sala-input').value=r;}
 
@@ -197,8 +197,42 @@ function startRoomWatch(){
   if(!state.currentSala)return;
   if(roomWatch)db.ref('salas/'+state.currentSala).off('value',roomWatch);
   roomWatch=db.ref('salas/'+state.currentSala).on('value',snap=>{
-    renderClaims(snap.val());
+    const data=snap.val();
+    renderClaims(data);
+    renderPlayers(data);
   });
+}
+
+// Jugadores en vivo: nombre, ● en línea / ○ desconectado, progreso X/24, 🏆 ganador
+function renderPlayers(data){
+  const list=document.getElementById('players-list');
+  const count=document.getElementById('players-count');
+  if(!list)return;
+  const players=(data&&data.players)||{};
+  const entries=Object.entries(players).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
+  if(!entries.length){
+    list.innerHTML='<div class="players-empty">Nadie se ha unido aún — comparte el código de sala.</div>';
+    if(count)count.textContent='';
+    return;
+  }
+  const claims=(data&&data.claims)||{};
+  const winnerSeeds=new Set(Object.values(claims).filter(c=>c.status==='confirmed').map(c=>String(c.playerSeed)));
+  if(data&&data.lastWinner)winnerSeeds.add(String(data.lastWinner.seed));
+  let online=0;
+  const rows=entries.map(([id,p])=>{
+    const isOn=p.connected!==false;
+    if(isOn)online++;
+    const m=normalizeMarks(p.marks);
+    const marked=m.filter(Boolean).length-(m[12]?1:0); // sin contar la casilla LIBRE
+    const trophy=winnerSeeds.has(String(p.seed??id));
+    return `<div class="player-row">
+      <span class="player-dot ${isOn?'on':'off'}" title="${isOn?'En línea':'Desconectado'}"></span>
+      <span class="player-name">${trophy?'<span class="trophy">🏆</span>':''}${esc(p.name||'Jugador')}</span>
+      <span class="player-progress">${marked}/24</span>
+    </div>`;
+  }).join('');
+  list.innerHTML=rows;
+  if(count)count.textContent=`● ${online} en línea · ○ ${entries.length-online} desconectado${entries.length-online===1?'':'s'}`;
 }
 
 function renderClaims(data){
