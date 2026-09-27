@@ -156,15 +156,15 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .join-sub{font-size:14px;color:var(--text2);}
 
 /* ============ CARTON ============ */
-#carton{background:var(--bg);padding:1rem;gap:8px;max-width:500px;margin:0 auto;width:100%;}
+#carton{background:var(--bg);padding:1rem;gap:8px;max-width:none;width:100%;}
 .carton-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:4px;}
-.carton-name{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text);}
-.bingo-letters{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:4px;}
-.bingo-letter{text-align:center;font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--green);}
-.bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
-.cell{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:5px 3px;font-size:9px;text-align:center;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;cursor:pointer;transition:all .15s;user-select:none;color:var(--text);gap:2px;font-weight:500;}
-.cell .cell-artist{font-size:8px;color:var(--text2);font-weight:400;}
-.cell.free{background:rgba(0,194,124,.1);border-color:rgba(0,194,124,.3);color:var(--green);cursor:default;font-weight:700;font-size:11px;}
+.carton-name{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text);}
+.bingo-letters{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;}
+.bingo-letter{text-align:center;font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--green);}
+.bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.cell{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 5px;font-size:13px;text-align:center;min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.3;cursor:pointer;transition:all .15s;user-select:none;color:var(--text);gap:3px;font-weight:500;}
+.cell .cell-artist{font-size:11px;color:var(--text2);font-weight:400;}
+.cell.free{background:rgba(0,194,124,.1);border-color:rgba(0,194,124,.3);color:var(--green);cursor:default;font-weight:700;font-size:15px;}
 .cell.marked{background:var(--green);color:#0a1a12;border-color:var(--green);font-weight:700;}
 .cell.marked .cell-artist{color:rgba(10,26,18,.7);}
 .cell:not(.free):not(.marked):hover{border-color:var(--border2);background:var(--bg3);}
