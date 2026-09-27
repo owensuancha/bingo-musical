@@ -2,7 +2,7 @@
 // Documentan el comportamiento ACTUAL (antes de cambiar nada). node --test tests/
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {makeCarton,parseSongs,checkWin,BINGO_LINES} from '../js/game-logic.js';
+import {makeCarton,parseSongs,checkWin,BINGO_LINES,validateNewSongs} from '../js/game-logic.js';
 
 const songList=Array.from({length:40},(_,i)=>({num:String(i+1),title:'Canción '+(i+1),artist:'Artista '+(i+1)}));
 
@@ -159,4 +159,33 @@ test('normalizeMarks: claves fuera de rango o valores falsos se ignoran',()=>{
   assert.equal(m[0],true);
   assert.equal(m[7],false);
   assert.equal(m.filter(Boolean).length,1);
+});
+
+// ===== validateNewSongs (lista nueva de "Otras canciones") =====
+test('validateNewSongs: menos de 25 → error', () => {
+  const r = validateNewSongs('1, A, B\n2, C, D');
+  assert.equal(r.ok, false);
+  assert.equal(r.songs.length, 0);
+  assert.match(r.error, /25/);
+});
+test('validateNewSongs: vacío → error', () => {
+  const r = validateNewSongs('');
+  assert.equal(r.ok, false);
+  assert.match(r.error, /25/);
+});
+test('validateNewSongs: 25 válidas → ok con parseo completo', () => {
+  const raw = Array.from({length:25},(_,i)=>(i+1)+', Título '+(i+1)+', Artista '+(i+1)).join('\n');
+  const r = validateNewSongs(raw);
+  assert.equal(r.ok, true);
+  assert.equal(r.songs.length, 25);
+  assert.equal(r.songs[0].num, '1');
+  assert.equal(r.songs[0].artist, 'Artista 1');
+  assert.equal(r.error, null);
+});
+test('validateNewSongs: formatos mixtos (con y sin número)', () => {
+  const raw = Array.from({length:24},(_,i)=>'Canción '+(i+1)+', Autor '+(i+1)).join('\n');
+  const r = validateNewSongs('99, Con número, Alguien\n' + raw);
+  assert.equal(r.ok, true);
+  assert.equal(r.songs.length, 25);
+  assert.equal(r.songs[0].num, '99');
 });

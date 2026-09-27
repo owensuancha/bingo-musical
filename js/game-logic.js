@@ -21,6 +21,15 @@ export function parseSongs(raw){
   return res;
 }
 
+// Valida una lista pegada para "Otras canciones": parsea y exige el mínimo histórico de 25
+export function validateNewSongs(raw){
+  const songs=parseSongs(String(raw||''));
+  if(songs.length<25){
+    return {ok:false,songs:[],error:'La lista necesita al menos 25 canciones (se encontraron '+songs.length+').'};
+  }
+  return {ok:true,songs,error:null};
+}
+
 // Líneas clásicas de bingo (5 filas + 5 columnas + 2 diagonales) en cuadrícula 5×5
 export const BINGO_LINES=[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],[0,6,12,18,24],[4,8,12,16,20]];
 
