@@ -309,3 +309,36 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
 .player-name .trophy{margin-right:4px;}
 .player-progress{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;flex:none;}
 .players-empty{font-size:13px;color:var(--text2);padding:4px 0;}
+
+/* ===== Avisos al jugador: modales y confeti ===== */
+.state-modal{
+  position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+  background:rgba(26,26,35,.78);padding:24px;
+}
+.state-modal.open{display:flex}
+.state-modal .state-box{
+  background:var(--papel);color:var(--tinta);border:4px solid var(--tinta);border-radius:18px;
+  padding:30px 28px;max-width:440px;width:100%;text-align:center;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);position:relative;
+}
+.state-box h2{font-size:clamp(1.4rem,4vw,1.9rem);margin:0 0 10px;font-family:var(--display);}
+.state-box p{margin:0 0 6px;line-height:1.5}
+.state-box .sub{color:#5b5b66;font-size:.95rem}
+.state-box .state-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.state-box .state-actions.vertical{flex-direction:column;align-items:stretch}
+.state-box .state-actions .btn{width:100%}
+.state-box .btn-mini{align-self:center}
+.state-modal.winner .state-box{border-color:#1f9d55;box-shadow:0 18px 50px rgba(31,157,85,.35)}
+.state-modal .state-emoji{font-size:2.6rem;line-height:1;margin-bottom:8px}
+#nr-error{color:#b3261e;font-size:.9rem;margin-top:10px;min-height:1.2em}
+.confetti-piece{
+  position:fixed;top:-16px;width:10px;height:16px;opacity:.95;pointer-events:none;z-index:90;
+  animation:confetti-fall linear forwards;
+}
+@keyframes confetti-fall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  100%{transform:translateY(105vh) rotate(720deg);opacity:.6}
+}
+@media (prefers-reduced-motion:reduce){
+  .confetti-piece{animation-duration:.6s!important}
+}
