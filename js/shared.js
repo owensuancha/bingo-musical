@@ -20,6 +20,8 @@ export const state = {
   playerSeed: 0,
   playerMarks: [],
   playerName: '',
+  winMode: 'full',
+  winColumns: [],
   tvSala: null,
   tvListener: null
 };

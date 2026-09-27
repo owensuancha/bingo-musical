@@ -38,6 +38,18 @@ const EXAMPLE=`1, Blinding Lights, The Weeknd
 
 export function loadExample(){document.getElementById('songs-input').value=EXAMPLE;if(!document.getElementById('sala-input').value)randomCode();previewSongs();}
 
+// Selector de modo de ganar (setup)
+export function winModeChanged(){
+  const mode=document.querySelector('input[name="win-mode"]:checked')?.value||'full';
+  document.getElementById('win-cols').style.display=mode==='columns'?'flex':'none';
+}
+
+function readWinConfig(){
+  const mode=document.querySelector('input[name="win-mode"]:checked')?.value||'full';
+  const cols=[...document.querySelectorAll('input[name="win-col"]:checked')].map(c=>parseInt(c.value,10));
+  return {winMode:mode,winColumns:mode==='columns'?cols:[]};
+}
+
 export function previewSongs(){
   const raw=document.getElementById('songs-input').value.trim();
   const box=document.getElementById('songs-preview');
@@ -58,14 +70,21 @@ export async function startGame(){
   const code=document.getElementById('sala-input').value.trim().toUpperCase();
   const raw=document.getElementById('songs-input').value.trim();
   const err=document.getElementById('setup-error');
+  const colsErr=document.getElementById('win-cols-error');
   if(!code||code.length<3){err.textContent='Ingresa un código de sala (mínimo 3 caracteres).';err.style.display='block';return;}
   const parsed=parseSongs(raw);
   if(parsed.length<25){err.textContent='Necesitas al menos 25 canciones para generar cartones.';err.style.display='block';return;}
+  const config=readWinConfig();
+  if(config.winMode==='columns'&&!config.winColumns.length){
+    colsErr.textContent='Selecciona al menos una columna (B, I, N, G u O).';colsErr.style.display='block';return;
+  }
+  colsErr.style.display='none';
   err.style.display='none';
   state.songs=parsed;state.currentSala=code;
+  state.winMode=config.winMode;state.winColumns=config.winColumns;
   sessionStorage.setItem('bingo_sala',code);
   sessionStorage.setItem('bingo_songs',JSON.stringify(parsed));
-  await db.ref('salas/'+code).set({songs:state.songs,played:[],current:null,tvState:'waiting',createdAt:Date.now()});
+  await db.ref('salas/'+code).set({songs:state.songs,played:[],current:null,tvState:'waiting',config,createdAt:Date.now()});
   document.getElementById('nav-sala-code').textContent=code;
   goTo('director');showDirectorNav(true);
   document.getElementById('d-sala-code').textContent=code;
@@ -149,6 +168,8 @@ export async function restoreDirectorSession(){
     if(snap.exists()){
       state.currentSala=savedSala;state.songs=JSON.parse(savedSongs);
       const data=snap.val();const played=data.played||[];state.currentSong=data.current||null;
+      state.winMode=data.config?.winMode||'full';
+      state.winColumns=data.config?.winColumns||[];
       document.getElementById('nav-sala-code').textContent=savedSala;
       document.getElementById('d-sala-code').textContent=savedSala;
       updateDStats(played.length);updateHist(played);

@@ -132,3 +132,31 @@ test('RING tiene 16 casillas de borde sin incluir el centro',()=>{
     assert.ok(r===0||r===4||c===0||c===4,'índice '+i+' no es borde');
   }
 });
+
+// ===== Task 4: persistencia de marcas =====
+import {normalizeMarks} from '../js/game-logic.js';
+
+test('normalizeMarks: array de Firebase se conserva tal cual',()=>{
+  const arr=new Array(25).fill(false);arr[0]=arr[12]=true;
+  assert.deepEqual(normalizeMarks(arr),arr);
+});
+
+test('normalizeMarks: objeto con índices (RTDB sin arrays) rellena huecos',()=>{
+  const obj={0:true,4:true,12:true,24:true};
+  const m=normalizeMarks(obj);
+  assert.equal(m.length,25);
+  assert.equal(m[0],true);assert.equal(m[4],true);assert.equal(m[12],true);assert.equal(m[24],true);
+  assert.equal(m[1],false);assert.equal(m[13],false);
+});
+
+test('normalizeMarks: null/undefined devuelve 25 casillas en false',()=>{
+  assert.deepEqual(normalizeMarks(null),new Array(25).fill(false));
+  assert.deepEqual(normalizeMarks(undefined),new Array(25).fill(false));
+});
+
+test('normalizeMarks: claves fuera de rango o valores falsos se ignoran',()=>{
+  const m=normalizeMarks({0:true,30:true,7:false,'99':true});
+  assert.equal(m[0],true);
+  assert.equal(m[7],false);
+  assert.equal(m.filter(Boolean).length,1);
+});

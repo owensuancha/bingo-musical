@@ -223,3 +223,17 @@ textarea{resize:vertical;min-height:150px;font-size:12px;font-family:monospace;l
   .p-cell .p-artist{font-size:8pt;font-weight:400;color:#555;}
   .p-cell.free{font-size:14pt;background:#e8f5ee;color:#1D9E75;}
 }
+
+/* ===== Modo de ganar (setup) ===== */
+.win-mode-list{display:flex;flex-direction:column;gap:8px;}
+.win-mode-opt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:border-color .15s,background .15s;}
+.win-mode-opt:hover{border-color:var(--green);}
+.win-mode-opt:has(input:checked){border-color:var(--green);background:rgba(0,194,124,.07);}
+.win-mode-opt input[type=radio]{margin-top:3px;accent-color:var(--green);width:16px;height:16px;flex:none;}
+.win-mode-opt span{display:flex;flex-direction:column;gap:2px;}
+.win-mode-opt b{font-size:14px;color:var(--text);font-weight:600;}
+.win-mode-opt small{font-size:12px;color:var(--text2);}
+.win-cols{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 10px 40px;}
+.win-cols label{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;}
+.win-cols label:has(input:checked){border-color:var(--green);color:var(--green);background:rgba(0,194,124,.08);}
+.win-cols input[type=checkbox]{accent-color:var(--green);}

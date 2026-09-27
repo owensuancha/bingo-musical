@@ -41,3 +41,11 @@ export function checkWin(marks,winMode='full',winColumns=[]){
   }
   return BINGO_LINES.some(l=>l.every(i=>marks[i]));
 }
+
+// Firebase devuelve array u objeto con índices; normalizar a 25 booleanos
+export function normalizeMarks(raw){
+  const m=new Array(25).fill(false);
+  if(Array.isArray(raw))raw.forEach((v,i)=>{if(v&&i<25)m[i]=true;});
+  else if(raw&&typeof raw==='object')Object.keys(raw).forEach(k=>{const i=parseInt(k,10);if(raw[k]&&i>=0&&i<25)m[i]=true;});
+  return m;
+}

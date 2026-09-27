@@ -83,6 +83,24 @@
       <div id="songs-preview" style="display:none;margin-top:10px;"></div>
     </div>
 
+    <div>
+      <div class="label">Modo de ganar</div>
+      <p class="hint" style="margin-bottom:8px;">Elige cómo se gana el bingo en esta partida.</p>
+      <div class="win-mode-list">
+        <label class="win-mode-opt"><input type="radio" name="win-mode" value="full" checked onchange="winModeChanged()"><span><b>Cartón completo</b><small>Gana quien complete 5 en fila, columna o diagonal</small></span></label>
+        <label class="win-mode-opt"><input type="radio" name="win-mode" value="columns" onchange="winModeChanged()"><span><b>Columnas seleccionadas</b><small>Gana quien marque todas las casillas de sus columnas</small></span></label>
+        <div id="win-cols" class="win-cols" style="display:none;">
+          <label><input type="checkbox" name="win-col" value="0" checked> B</label>
+          <label><input type="checkbox" name="win-col" value="1"> I</label>
+          <label><input type="checkbox" name="win-col" value="2"> N</label>
+          <label><input type="checkbox" name="win-col" value="3"> G</label>
+          <label><input type="checkbox" name="win-col" value="4"> O</label>
+        </div>
+        <label class="win-mode-opt"><input type="radio" name="win-mode" value="ring" onchange="winModeChanged()"><span><b>Forma de O (anillo)</b><small>Gana quien marque todo el perímetro del cartón</small></span></label>
+      </div>
+      <div id="win-cols-error" style="font-size:13px;color:var(--red);display:none;margin-top:6px;"></div>
+    </div>
+
     <div class="row">
       <button class="btn btn-primary" onclick="startGame()">Crear sala y comenzar</button>
       <button class="btn btn-secondary btn-sm" onclick="loadExample()">Cargar ejemplo</button>
