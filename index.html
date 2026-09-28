@@ -172,7 +172,8 @@
       <div id="round-ended-box" style="display:none;">
         <div class="round-ended-msg" id="round-ended-msg"></div>
         <div class="row" style="margin-top:10px;">
-          <button class="btn btn-primary btn-sm" onclick="newRound()">▶ Nueva ronda</button>
+          <button class="btn btn-primary btn-sm" onclick="newRound()">▶ Seguir jugando</button>
+          <button class="btn btn-secondary btn-sm" onclick="openNewRoundModal()">🏁 Nueva ronda</button>
         </div>
       </div>
     </div>
@@ -334,6 +335,52 @@
   <div id="print-cartons-area" style="padding:0 2rem 2rem;display:none;grid-template-columns:1fr 1fr;gap:16px;"></div>
 </div>
 
+<!-- ===== Modales de estado (avisos al jugador) ===== -->
+<div id="winner-modal" class="state-modal" style="display:none;">
+  <div class="state-modal-card">
+    <div class="state-modal-emoji">🏁</div>
+    <div class="state-modal-title" id="winner-modal-title">¡GANÓ!</div>
+    <div class="state-modal-sub">Ronda terminada</div>
+    <button class="btn btn-primary" onclick="closeWinnerModal()">Cerrar</button>
+  </div>
+</div>
+<div id="ended-modal" class="state-modal" style="display:none;">
+  <div class="state-modal-card">
+    <div class="state-modal-emoji">🏁</div>
+    <div class="state-modal-title">Se terminó la partida</div>
+    <div class="state-modal-sub">El director la dio por terminada.</div>
+    <button class="btn btn-primary" onclick="backToHome()">Volver al inicio</button>
+  </div>
+</div>
+<div id="continue-modal" class="state-modal" style="display:none;">
+  <div class="state-modal-card">
+    <div class="state-modal-emoji">▶️</div>
+    <div class="state-modal-title green">La partida continúa</div>
+    <div class="state-modal-sub">Sigue la ronda con las mismas canciones.</div>
+    <button class="btn btn-primary" onclick="closeContinueModal()">Seguir</button>
+  </div>
+</div>
+<!-- ===== Modal Nueva ronda (director) ===== -->
+<div id="new-round-modal" class="state-modal" style="display:none;">
+  <div class="state-modal-card">
+    <div class="state-modal-emoji">🏁</div>
+    <div class="state-modal-title">Nueva ronda</div>
+    <div id="nr-step-choice" class="nr-actions">
+      <button class="btn btn-secondary" onclick="newRoundSame()">🔁 Mismas canciones — empezar de cero</button>
+      <button class="btn btn-secondary" onclick="newRoundOtherStep()">🆕 Otras canciones — pegar lista nueva</button>
+      <button class="btn btn-ghost" onclick="closeNewRoundModal()">Cancelar</button>
+    </div>
+    <div id="nr-step-songs" style="display:none;width:100%;text-align:left;">
+      <div class="state-modal-sub" style="text-align:left;">Pega la nueva lista (una por línea: <b>Número, Título, Artista</b> o <b>Título, Artista</b>):</div>
+      <textarea id="nr-songs" placeholder="1, Blinding Lights, The Weeknd&#10;Shape of You, Ed Sheeran"></textarea>
+      <div id="nr-error"></div>
+      <div class="nr-actions">
+        <button class="btn btn-primary" onclick="newRoundOtherApply()">Empezar ronda</button>
+        <button class="btn btn-ghost" onclick="newRoundOtherBack()">Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
