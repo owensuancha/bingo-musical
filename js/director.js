@@ -1,7 +1,7 @@
 // Vista y lógica del director (setup + panel del director)
 
 import {db,state,goTo,showDirectorNav,getAppURL,generateQR} from './shared.js';
-import {parseSongs,normalizeMarks} from './game-logic.js';
+import {parseSongs,normalizeMarks,validateNewSongs} from './game-logic.js';
 
 export function randomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];document.getElementById('sala-input').value=r;}
 
@@ -348,10 +348,16 @@ export async function endRound(){
   }catch(e){}
 }
 
-// Nueva ronda después de "Terminar ronda"
+// "▶ Seguir jugando" tras ronda terminada: continúa la MISMA ronda (played intacto)
+// y avisa a los jugadores con notice {type:'continue'}
 export async function newRound(){
   if(!state.currentSala)return;
-  try{await db.ref('salas/'+state.currentSala).update({roundEnded:null,lastWinner:null,claims:null,designatedSeed:null});}catch(e){}
+  try{
+    await db.ref('salas/'+state.currentSala).update({
+      roundEnded:null,lastWinner:null,claims:null,designatedSeed:null,
+      notice:{type:'continue',at:Date.now()}
+    });
+  }catch(e){}
 }
 
 // Restaurar sesión del director al recargar (si hay sala en sessionStorage)
@@ -385,4 +391,58 @@ export async function restoreDirectorSession(){
   }catch(e){}
   sessionStorage.removeItem('bingo_sala');sessionStorage.removeItem('bingo_songs');
   return false;
+}
+
+// ===== Modal Nueva ronda (4-B): mismas u otras canciones =====
+export function openNewRoundModal(){
+  if(!state.currentSala)return;
+  document.getElementById('nr-step-choice').style.display='flex';
+  document.getElementById('nr-step-songs').style.display='none';
+  document.getElementById('nr-error').style.display='none';
+  document.getElementById('nr-songs').value='';
+  document.getElementById('new-round-modal').style.display='flex';
+}
+export function closeNewRoundModal(){document.getElementById('new-round-modal').style.display='none';}
+export function newRoundOtherStep(){
+  document.getElementById('nr-step-choice').style.display='none';
+  document.getElementById('nr-step-songs').style.display='block';
+}
+export function newRoundOtherBack(){
+  document.getElementById('nr-step-choice').style.display='flex';
+  document.getElementById('nr-step-songs').style.display='none';
+}
+
+// Reset común de ronda: played vacío + estado limpio + notice 'round' (+ extra, p. ej. songs)
+async function startNewRound(extra){
+  const at=Date.now();
+  try{
+    await db.ref('salas/'+state.currentSala).update({
+      played:[],current:null,tvState:'waiting',claims:null,roundEnded:null,lastWinner:null,designatedSeed:null,
+      notice:{type:'round',at},
+      ...(extra||{})
+    });
+  }catch(e){}
+}
+function resetDirectorNow(){
+  state.currentSong=null;
+  document.getElementById('d-placeholder').style.display='block';
+  document.getElementById('d-current').style.display='none';
+  updateDStats(0);updateHist([]);
+}
+export async function newRoundSame(){
+  if(!state.currentSala)return;
+  closeNewRoundModal();
+  await startNewRound({});
+  resetDirectorNow();
+}
+export async function newRoundOtherApply(){
+  if(!state.currentSala)return;
+  const res=validateNewSongs(document.getElementById('nr-songs').value);
+  const err=document.getElementById('nr-error');
+  if(!res.ok){err.textContent=res.error;err.style.display='block';return;}
+  err.style.display='none';
+  closeNewRoundModal();
+  state.songs=res.songs;
+  await startNewRound({songs:res.songs});
+  resetDirectorNow();
 }
