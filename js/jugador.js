@@ -20,15 +20,24 @@ function baseMarks(){const m=new Array(25).fill(false);m[12]=true;return m;}
 function playerRef(){return db.ref('salas/'+state.currentSala+'/players/'+state.playerSeed);}
 
 function savePlayerLocal(){
-  try{
-    localStorage.setItem(LOCAL_KEY,JSON.stringify({
-      sala:state.currentSala,seed:state.playerSeed,name:state.playerName,
-      songs:state.songs,config:{winMode:state.winMode,winColumns:state.winColumns},
-      marks:state.playerMarks
-    }));
-  }catch(e){}
+  const payload=JSON.stringify({
+    sala:state.currentSala,seed:state.playerSeed,name:state.playerName,
+    songs:state.songs,config:{winMode:state.winMode,winColumns:state.winColumns},
+    marks:state.playerMarks
+  });
+  // localStorage primario + sessionStorage respaldo (mismo patrón que la sesión del director)
+  try{localStorage.setItem(LOCAL_KEY,payload);}catch(e){}
+  try{sessionStorage.setItem(LOCAL_KEY,payload);}catch(e){}
 }
-function clearPlayerLocal(){try{localStorage.removeItem(LOCAL_KEY);}catch(e){}}
+function readPlayerLocal(){
+  try{const s=localStorage.getItem(LOCAL_KEY);if(s)return JSON.parse(s);}catch(e){}
+  try{const s=sessionStorage.getItem(LOCAL_KEY);if(s)return JSON.parse(s);}catch(e){}
+  return null;
+}
+function clearPlayerLocal(){
+  try{localStorage.removeItem(LOCAL_KEY);}catch(e){}
+  try{sessionStorage.removeItem(LOCAL_KEY);}catch(e){}
+}
 
 async function persistMarks(){
   savePlayerLocal();
@@ -93,8 +102,7 @@ export async function joinGame(){
 // Restaurar sesión del jugador tras refrescar (Firebase primario, localStorage respaldo)
 // joinCode: si viene en la URL y NO coincide con la sesión guardada, no restaura
 export async function restorePlayerSession(joinCode=null){
-  let saved=null;
-  try{saved=JSON.parse(localStorage.getItem(LOCAL_KEY));}catch(e){}
+  const saved=readPlayerLocal();
   if(!saved||!saved.sala||!saved.seed)return false;
   if(joinCode&&joinCode!==String(saved.sala).toUpperCase())return false; // otra sala → pantalla de unión
   let data=null;
