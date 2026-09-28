@@ -443,6 +443,7 @@ export async function newRoundOtherApply(){
   err.style.display='none';
   closeNewRoundModal();
   state.songs=res.songs;
+  sessionStorage.setItem('bingo_songs',JSON.stringify(res.songs));
   await startNewRound({songs:res.songs});
   resetDirectorNow();
 }
