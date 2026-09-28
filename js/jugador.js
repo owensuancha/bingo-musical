@@ -9,6 +9,10 @@ let playerListener=null;
 let claimsListener=null;
 let connListener=null;
 let ownClaimStatus=null;
+let roomListener=null;
+let lastNoticeAt=parseInt(localStorage.getItem('bingo_notice_at')||'0',10)||0;
+let winnerDismissed=false;
+let prevSongsJson=null;
 
 function baseMarks(){const m=new Array(25).fill(false);m[12]=true;return m;}
 
@@ -80,6 +84,7 @@ export async function joinGame(){
   try{await playerRef().set({name,seed:state.playerSeed,joinedAt:Date.now(),marks:state.playerMarks,connected:true});}catch(e){}
   subscribePlayer();
   subscribeClaims();
+  subscribeRoom();
   watchConnection();
   renderCarton();goTo('carton');
 }
@@ -112,6 +117,7 @@ export async function restorePlayerSession(joinCode=null){
   setPlayerLabels();
   subscribePlayer();
   subscribeClaims();
+  subscribeRoom();
   watchConnection();
   renderCarton();checkWin();
   goTo('carton');
@@ -123,6 +129,8 @@ export async function leaveGame(){
   playerListener=null;
   if(claimsListener&&state.currentSala){try{db.ref('salas/'+state.currentSala+'/claims').off('value',claimsListener);}catch(e){}}
   claimsListener=null;ownClaimStatus=null;
+  if(roomListener&&state.currentSala){try{db.ref('salas/'+state.currentSala).off('value',roomListener);}catch(e){}}
+  roomListener=null;
   if(connListener){try{db.ref('.info/connected').off('value',connListener);}catch(e){}}
   connListener=null;
   if(state.currentSala){
@@ -132,6 +140,7 @@ export async function leaveGame(){
   }
   clearPlayerLocal();
   closeBingoPopup();
+  document.querySelectorAll('.state-modal').forEach(m=>{m.style.display='none';});
   state.currentSala=null;state.songs=[];state.playerSeed=0;state.playerMarks=[];goTo('home');
 }
 
@@ -167,6 +176,47 @@ function subscribeClaims(){
       showBingoPopup('¡Reclamo confirmado!','El director confirmó tu bingo. Espera el resultado de la ronda.',false);
     }else if(own.status==='pending'&&prev==='rejected'){
       showBingoPopup('¡BINGO, GANASTE!','Reclamo enviado de nuevo. El director está revisando tu cartón…',false);
+    }
+  });
+}
+
+// Observa la sala raíz: ganador de ronda, fin de partida (sala borrada),
+// avisos notice (guard anti-duplicados por at en localStorage) y cambio de songs
+function subscribeRoom(){
+  if(roomListener&&state.currentSala)db.ref('salas/'+state.currentSala).off('value',roomListener);
+  roomListener=null;
+  if(!state.currentSala)return;
+  prevSongsJson=JSON.stringify(state.songs);
+  roomListener=db.ref('salas/'+state.currentSala).on('value',snap=>{
+    const data=snap.val();
+    if(!data){ // la sala fue eliminada → fin de partida
+      if(state.currentSala&&roomListener){
+        document.getElementById('ended-modal').style.display='flex';
+      }
+      return;
+    }
+    // songs cambió (otras canciones) → cartón nuevo + marcas limpias
+    const sj=JSON.stringify(data.songs||[]);
+    if(sj!==prevSongsJson){
+      const first=prevSongsJson!==null;
+      prevSongsJson=sj;
+      if(first){
+        state.songs=data.songs||[];
+        clearMarks();
+      }
+    }
+    // ganador de la ronda → modal con confeti (1-A)
+    const ended=!!data.roundEnded;
+    const w=data.lastWinner||null;
+    if(ended&&w&&!winnerDismissed){showWinnerModal(w);}
+    else if(!ended){winnerDismissed=false;hideWinnerModal();}
+    // avisos notice → una sola vez por at
+    const n=data.notice;
+    if(n&&n.at&&n.at>lastNoticeAt){
+      lastNoticeAt=n.at;
+      try{localStorage.setItem('bingo_notice_at',String(n.at));}catch(e){}
+      if(n.type==='continue'){showContinueModal();}
+      else if(n.type==='round'){winnerDismissed=false;hideWinnerModal();clearMarks();}
     }
   });
 }
@@ -256,4 +306,39 @@ export async function buildPrint(){
   }
   document.getElementById('print-actions').style.display='flex';
   document.getElementById('print-count-label').textContent=qty+' cartones listos para imprimir';
+}
+
+// ===== Avisos de estado (winner / fin / continúa) =====
+export function showWinnerModal(w){
+  const m=document.getElementById('winner-modal');
+  document.getElementById('winner-modal-title').textContent='¡'+w.name+' GANÓ!';
+  m.style.display='flex';
+  launchWinnerConfetti();
+}
+export function hideWinnerModal(){document.getElementById('winner-modal').style.display='none';}
+export function closeWinnerModal(){winnerDismissed=true;hideWinnerModal();}
+export function showContinueModal(){document.getElementById('continue-modal').style.display='flex';}
+export function closeContinueModal(){document.getElementById('continue-modal').style.display='none';}
+
+function launchWinnerConfetti(){
+  const card=document.querySelector('#winner-modal .state-modal-card');
+  if(!card)return;
+  card.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
+  const colors=['#e8b84b','#00c27c','#ff4d4d','#7ce8bd','#ffffff'];
+  for(let i=0;i<28;i++){
+    const s=document.createElement('span');
+    s.className='confetti-piece';
+    s.style.left=(Math.random()*100)+'%';
+    s.style.background=colors[i%colors.length];
+    s.style.animationDuration=(1.4+Math.random()*1.6)+'s';
+    s.style.animationDelay=(Math.random()*0.6)+'s';
+    card.appendChild(s);
+  }
+  setTimeout(()=>{card.querySelectorAll('.confetti-piece').forEach(el=>el.remove());},4200);
+}
+
+// Botón "Volver al inicio" del modal de fin de partida (2-B)
+export function backToHome(){
+  document.querySelectorAll('.state-modal').forEach(m=>{m.style.display='none';});
+  leaveGame();
 }

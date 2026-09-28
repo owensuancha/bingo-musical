@@ -3,7 +3,7 @@
 
 import {goTo,dirNavGo} from './shared.js';
 import {randomCode,loadExample,previewSongs,startGame,pullSong,triggerSuspense,resetGame,endGame,toggleVerification,restoreDirectorSession,winModeChanged,confirmClaim,rejectClaim,designateWinner,continueRound,endRound,newRound,searchSongs,openNewRoundModal,closeNewRoundModal,newRoundSame,newRoundOtherStep,newRoundOtherBack,newRoundOtherApply} from './director.js';
-import {joinGame,leaveGame,clearMarks,buildPrint,restorePlayerSession,sayBingo,closeBingoPopup} from './jugador.js';
+import {joinGame,leaveGame,clearMarks,buildPrint,restorePlayerSession,sayBingo,closeBingoPopup,closeWinnerModal,closeContinueModal,backToHome} from './jugador.js';
 import {tvConnect,disconnectTV,toggleFS} from './tv.js';
 
 // Handlers inline (onclick/oninput) de index.html — exponerlos en window
@@ -12,7 +12,7 @@ Object.assign(window,{
   randomCode,loadExample,previewSongs,startGame,pullSong,triggerSuspense,resetGame,endGame,toggleVerification,winModeChanged,
   confirmClaim,rejectClaim,designateWinner,continueRound,endRound,newRound,searchSongs,
   openNewRoundModal,closeNewRoundModal,newRoundSame,newRoundOtherStep,newRoundOtherBack,newRoundOtherApply,
-  joinGame,leaveGame,clearMarks,buildPrint,sayBingo,closeBingoPopup,
+  joinGame,leaveGame,clearMarks,buildPrint,sayBingo,closeBingoPopup,closeWinnerModal,closeContinueModal,backToHome,
   tvConnect,disconnectTV,toggleFS
 });
 
