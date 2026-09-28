@@ -12,6 +12,7 @@ let ownClaimStatus=null;
 let roomListener=null;
 let lastNoticeAt=parseInt(localStorage.getItem('bingo_notice_at')||'0',10)||0;
 let winnerDismissed=false;
+let winnerShownFor=null;
 let prevSongsJson=null;
 
 function baseMarks(){const m=new Array(25).fill(false);m[12]=true;return m;}
@@ -208,15 +209,18 @@ function subscribeRoom(){
     // ganador de la ronda → modal con confeti (1-A)
     const ended=!!data.roundEnded;
     const w=data.lastWinner||null;
-    if(ended&&w&&!winnerDismissed){showWinnerModal(w);}
-    else if(!ended){winnerDismissed=false;hideWinnerModal();}
+    if(ended&&w&&!winnerDismissed){
+      const key=JSON.stringify(data.roundEnded)+'|'+(w.name||'');
+      if(winnerShownFor!==key){winnerShownFor=key;showWinnerModal(w);}
+    }
+    else if(!ended){winnerDismissed=false;winnerShownFor=null;hideWinnerModal();}
     // avisos notice → una sola vez por at
     const n=data.notice;
     if(n&&n.at&&n.at>lastNoticeAt){
       lastNoticeAt=n.at;
       try{localStorage.setItem('bingo_notice_at',String(n.at));}catch(e){}
       if(n.type==='continue'){showContinueModal();}
-      else if(n.type==='round'){winnerDismissed=false;hideWinnerModal();clearMarks();}
+      else if(n.type==='round'){winnerDismissed=false;winnerShownFor=null;hideWinnerModal();clearMarks();}
     }
   });
 }
